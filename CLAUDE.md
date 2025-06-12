@@ -181,6 +181,7 @@ The `/claude/` folder contains:
 
 Current documents:
 - `plan-feat-prediction.md` - Glucose prediction implementation (✅ Completed)
+- `plan-feat-chart-caching.md` - Chart caching optimization (✅ Completed)
 - `plan-feat-ble.md` - Direct BLE connection from Apple Watch to Libre sensors
 - `summary-feat-prediction-improvements.md` - Detailed analysis of prediction system improvements
 
