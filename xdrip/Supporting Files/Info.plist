@@ -33,6 +33,47 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon</string>
+			</array>
+		</dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>AppIcon-Cyborg-Classic</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-Cyborg-Classic</string>
+				</array>
+			</dict>
+			<key>AppIcon-Cyborg-Dark</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-Cyborg-Dark</string>
+				</array>
+			</dict>
+			<key>AppIcon-Cyborg-Blue</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-Cyborg-Blue</string>
+				</array>
+			</dict>
+			<key>AppIcon-Cyborg-Red</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-Cyborg-Red</string>
+				</array>
+			</dict>
+		</dict>
+	</dict>
 	<key>INAlternativeAppNames</key>
 	<array>
 		<dict>
