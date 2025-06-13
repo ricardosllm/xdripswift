@@ -73,6 +73,8 @@ extension UserDefaults {
         case notificationInterval = "notificationInterval"
         /// which type of live activities should be shown, if any?
         case liveActivityType = "liveActivityType"
+        /// selected app icon name
+        case selectedAppIcon = "selectedAppIcon"
         
         // Home Screen and main chart settings
         
@@ -725,6 +727,16 @@ extension UserDefaults {
         }
         set {
             set(newValue.rawValue, forKey: Key.liveActivityType.rawValue)
+        }
+    }
+    
+    /// selected app icon name - nil means default icon
+    var selectedAppIcon: String? {
+        get {
+            return string(forKey: Key.selectedAppIcon.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.selectedAppIcon.rawValue)
         }
     }
     

@@ -221,6 +221,47 @@
 		8C1E7CA42DF88C81003BFF4B /* InsulinProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E7CA22DF88C81003BFF4B /* InsulinProfile.swift */; };
 		8C1E7CA52DF88C81003BFF4B /* COBCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E7CA12DF88C81003BFF4B /* COBCalculator.swift */; };
 		8C1E7CA62DF88C81003BFF4B /* IOBCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E7CA32DF88C81003BFF4B /* IOBCalculator.swift */; };
+		8C6E015C2DFAD52200E01F31 /* SettingsViewAppearanceSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6E015B2DFAD52200E01F31 /* SettingsViewAppearanceSettingsViewModel.swift */; };
+		8C6E01952DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01932DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png */; };
+		8C6E01962DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01912DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png */; };
+		8C6E01972DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018F2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png */; };
+		8C6E01982DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01902DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png */; };
+		8C6E01992DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01942DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png */; };
+		8C6E019A2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01922DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png */; };
+		8C6E019B2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018E2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png */; };
+		8C6E019C2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018D2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png */; };
+		8C6E019D2DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01932DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png */; };
+		8C6E019E2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01912DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png */; };
+		8C6E019F2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018F2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png */; };
+		8C6E01A02DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01902DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png */; };
+		8C6E01A12DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01942DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png */; };
+		8C6E01A22DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01922DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png */; };
+		8C6E01A32DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018E2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png */; };
+		8C6E01A42DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018D2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png */; };
+		8C6E01A52DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01932DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png */; };
+		8C6E01A62DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01912DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png */; };
+		8C6E01A72DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018F2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png */; };
+		8C6E01A82DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01902DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png */; };
+		8C6E01A92DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01942DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png */; };
+		8C6E01AA2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01922DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png */; };
+		8C6E01AB2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018E2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png */; };
+		8C6E01AC2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018D2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png */; };
+		8C6E01AD2DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01932DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png */; };
+		8C6E01AE2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01912DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png */; };
+		8C6E01AF2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018F2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png */; };
+		8C6E01B02DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01902DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png */; };
+		8C6E01B12DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01942DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png */; };
+		8C6E01B22DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01922DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png */; };
+		8C6E01B32DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018E2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png */; };
+		8C6E01B42DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018D2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png */; };
+		8C6E01B52DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01932DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png */; };
+		8C6E01B62DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01912DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png */; };
+		8C6E01B72DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018F2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png */; };
+		8C6E01B82DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01902DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png */; };
+		8C6E01B92DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01942DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png */; };
+		8C6E01BA2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01922DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png */; };
+		8C6E01BB2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018E2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png */; };
+		8C6E01BC2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E018D2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png */; };
 		8CA98B372DF83C9800399CE8 /* GlucoseChartManager+Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA98B322DF83C9800399CE8 /* GlucoseChartManager+Prediction.swift */; };
 		8CA98B382DF83C9800399CE8 /* Array+Regression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA98B312DF83C9800399CE8 /* Array+Regression.swift */; };
 		8CA98B4A2DF83CB300399CE8 /* GlucoseReading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA98B3D2DF83CB300399CE8 /* GlucoseReading.swift */; };
@@ -1066,6 +1107,15 @@
 		8C1E7CA12DF88C81003BFF4B /* COBCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = COBCalculator.swift; sourceTree = "<group>"; };
 		8C1E7CA22DF88C81003BFF4B /* InsulinProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsulinProfile.swift; sourceTree = "<group>"; };
 		8C1E7CA32DF88C81003BFF4B /* IOBCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBCalculator.swift; sourceTree = "<group>"; };
+		8C6E015B2DFAD52200E01F31 /* SettingsViewAppearanceSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewAppearanceSettingsViewModel.swift; sourceTree = "<group>"; };
+		8C6E018D2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Blue@2x.png"; path = "AlternateIcons/AppIcon-Cyborg-Blue@2x.png"; sourceTree = "<group>"; };
+		8C6E018E2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Blue@3x.png"; path = "AlternateIcons/AppIcon-Cyborg-Blue@3x.png"; sourceTree = "<group>"; };
+		8C6E018F2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Classic@2x.png"; path = "AlternateIcons/AppIcon-Cyborg-Classic@2x.png"; sourceTree = "<group>"; };
+		8C6E01902DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Classic@3x.png"; path = "AlternateIcons/AppIcon-Cyborg-Classic@3x.png"; sourceTree = "<group>"; };
+		8C6E01912DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Dark@2x.png"; path = "AlternateIcons/AppIcon-Cyborg-Dark@2x.png"; sourceTree = "<group>"; };
+		8C6E01922DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Dark@3x.png"; path = "AlternateIcons/AppIcon-Cyborg-Dark@3x.png"; sourceTree = "<group>"; };
+		8C6E01932DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Red@2x.png"; path = "AlternateIcons/AppIcon-Cyborg-Red@2x.png"; sourceTree = "<group>"; };
+		8C6E01942DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Red@3x.png"; path = "AlternateIcons/AppIcon-Cyborg-Red@3x.png"; sourceTree = "<group>"; };
 		8CA98B312DF83C9800399CE8 /* Array+Regression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Regression.swift"; sourceTree = "<group>"; };
 		8CA98B322DF83C9800399CE8 /* GlucoseChartManager+Prediction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GlucoseChartManager+Prediction.swift"; sourceTree = "<group>"; };
 		8CA98B3D2DF83CB300399CE8 /* GlucoseReading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlucoseReading.swift; sourceTree = "<group>"; };
@@ -2363,6 +2413,14 @@
 			isa = PBXGroup;
 			children = (
 				F8AC426621ADEBD70078C348 /* Assets.xcassets */,
+				8C6E018D2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png */,
+				8C6E018E2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png */,
+				8C6E018F2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png */,
+				8C6E01902DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png */,
+				8C6E01912DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png */,
+				8C6E01922DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png */,
+				8C6E01932DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png */,
+				8C6E01942DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png */,
 				F8B3A7B7226CC0B7004BA588 /* sounds */,
 			);
 			path = Resources;
@@ -3148,6 +3206,7 @@
 		F8B3A837227F090D004BA588 /* SettingsViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				8C6E015B2DFAD52200E01F31 /* SettingsViewAppearanceSettingsViewModel.swift */,
 				F8B3A838227F090D004BA588 /* SettingsViewAlertSettingsViewModel.swift */,
 				4767BDD52BD51E36009BC2EC /* SettingsViewAppleWatchSettingsViewModel.swift */,
 				47DB06C52A6FC72000267BE3 /* SettingsViewCalendarEventsSettingsViewModel.swift */,
@@ -4062,6 +4121,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C6E01AD2DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */,
+				8C6E01AE2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */,
+				8C6E01AF2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */,
+				8C6E01B02DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */,
+				8C6E01B12DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */,
+				8C6E01B22DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */,
+				8C6E01B32DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */,
+				8C6E01B42DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */,
 				47A6AC432B7D430D0047A4BA /* HomeView.strings in Resources */,
 				4716A4FA2B406C3F00419052 /* Assets.xcassets in Resources */,
 				472134DD2BC6A63100729850 /* Assets.xcassets in Resources */,
@@ -4075,6 +4142,14 @@
 			files = (
 				472134DF2BC6A63100729850 /* Assets.xcassets in Resources */,
 				476FA90C2BDC1EBA0091866C /* WatchComplication.strings in Resources */,
+				8C6E01A52DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */,
+				8C6E01A62DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */,
+				8C6E01A72DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */,
+				8C6E01A82DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */,
+				8C6E01A92DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */,
+				8C6E01AA2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */,
+				8C6E01AB2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */,
+				8C6E01AC2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */,
 				4793598C2B88B95B007D3CEE /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -4083,6 +4158,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C6E01952DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */,
+				8C6E01962DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */,
+				8C6E01972DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */,
+				8C6E01982DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */,
+				8C6E01992DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */,
+				8C6E019A2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */,
+				8C6E019B2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */,
+				8C6E019C2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */,
 				47A6AC442B7D430D0047A4BA /* HomeView.strings in Resources */,
 				47A6ABE92B790CC70047A4BA /* Preview Assets.xcassets in Resources */,
 				47EDD1492BDD56C800C5A286 /* WatchApp.strings in Resources */,
@@ -4097,6 +4180,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				4737758D2C14DDC900525B90 /* Assets.xcassets in Resources */,
+				8C6E019D2DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */,
+				8C6E019E2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */,
+				8C6E019F2DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */,
+				8C6E01A02DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */,
+				8C6E01A12DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */,
+				8C6E01A22DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */,
+				8C6E01A32DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */,
+				8C6E01A42DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */,
 				47CD641C2BE9506C002BDA68 /* Base in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -4217,6 +4308,14 @@
 				F82437B524CB7A9900BED341 /* Alert_Tone_Busy.caf in Resources */,
 				F8EEDD552300136F00D2D610 /* DexcomShareTestResult.strings in Resources */,
 				F82437AD24CB7A9900BED341 /* Laser_Shoot.caf in Resources */,
+				8C6E01B52DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */,
+				8C6E01B62DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */,
+				8C6E01B72DFADBA900E01F31 /* AppIcon-Cyborg-Classic@2x.png in Resources */,
+				8C6E01B82DFADBA900E01F31 /* AppIcon-Cyborg-Classic@3x.png in Resources */,
+				8C6E01B92DFADBA900E01F31 /* AppIcon-Cyborg-Red@3x.png in Resources */,
+				8C6E01BA2DFADBA900E01F31 /* AppIcon-Cyborg-Dark@3x.png in Resources */,
+				8C6E01BB2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png in Resources */,
+				8C6E01BC2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png in Resources */,
 				F824379824CB7A9900BED341 /* Not_Kiddin.caf in Resources */,
 				F824378E24CB7A9900BED341 /* Win_Gain.caf in Resources */,
 				F824378624CB7A9900BED341 /* Alien_Siren.caf in Resources */,
@@ -4691,6 +4790,7 @@
 				F8252867243E50FE0067AF77 /* ConstantsLibre.swift in Sources */,
 				F8F9720923A5915900C3F17D /* AESCrypt.m in Sources */,
 				F8CB59D3274D94AF00BA199E /* DexcomSessionStartTxMessage.swift in Sources */,
+				8C6E015C2DFAD52200E01F31 /* SettingsViewAppearanceSettingsViewModel.swift in Sources */,
 				F80ED2ED236F68F90005C035 /* SettingsViewM5StackGeneralSettingsViewModel.swift in Sources */,
 				F816E10A2437E7B8009EE65B /* CGMBlueReaderTransmitterDelegate.swift in Sources */,
 				47D08D5B2B5437F500B0BEA7 /* ConstantsGlucoseChartSwiftUI.swift in Sources */,

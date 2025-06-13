@@ -35,6 +35,9 @@ final class SettingsViewController: UIViewController {
         ///General settings - language, glucose unit
         case general
         
+        /// Appearance settings - app icon
+        case appearance
+        
         ///Home Screen settings - urgent high, high, target, low and urgent low values for guidelines
         case homescreen
         
@@ -92,6 +95,8 @@ final class SettingsViewController: UIViewController {
                 return SettingsViewDataSourceSettingsViewModel(coreDataManager: coreDataManager)
             case .general:
                 return SettingsViewNotificationsSettingsViewModel()
+            case .appearance:
+                return SettingsViewAppearanceSettingsViewModel()
             case .homescreen:
                 return SettingsViewHomeScreenSettingsViewModel()
             case .statistics:
