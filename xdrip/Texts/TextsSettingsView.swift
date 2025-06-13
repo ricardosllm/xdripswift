@@ -204,6 +204,40 @@ class Texts_SettingsView {
         return NSLocalizedString("settingsviews_IntervalMessage", tableName: filename, bundle: Bundle.main, value: "Minimum interval between two notifications (mins)", comment: "When clicking the interval setting, a pop up asks for minimum number of minutes between two notifications, this is the pop up message - this is used for setting the interval between two readings in BG notifications, Speak readings, Apple Watch")
     }()
     
+    // MARK: - Section Appearance
+    
+    static let sectionTitleAppearance: String = {
+        return NSLocalizedString("settingsviews_sectiontitleappearance", tableName: filename, bundle: Bundle.main, value: "Appearance", comment: "appearance settings, section title")
+    }()
+    
+    static let labelAppIcon: String = {
+        return NSLocalizedString("settingsviews_labelAppIcon", tableName: filename, bundle: Bundle.main, value: "App Icon", comment: "appearance settings, app icon selection")
+    }()
+    
+    static let selectAppIcon: String = {
+        return NSLocalizedString("settingsviews_selectAppIcon", tableName: filename, bundle: Bundle.main, value: "Select App Icon", comment: "appearance settings, select app icon dialog title")
+    }()
+    
+    static let appIconDefault: String = {
+        return NSLocalizedString("settingsviews_appIconDefault", tableName: filename, bundle: Bundle.main, value: "Default", comment: "appearance settings, default app icon")
+    }()
+    
+    static let appIconCyborgClassic: String = {
+        return NSLocalizedString("settingsviews_appIconCyborgClassic", tableName: filename, bundle: Bundle.main, value: "Cyborg-Classic", comment: "appearance settings, cyborg classic app icon")
+    }()
+    
+    static let appIconCyborgDark: String = {
+        return NSLocalizedString("settingsviews_appIconCyborgDark", tableName: filename, bundle: Bundle.main, value: "Cyborg-Dark", comment: "appearance settings, cyborg dark app icon")
+    }()
+    
+    static let appIconCyborgBlue: String = {
+        return NSLocalizedString("settingsviews_appIconCyborgBlue", tableName: filename, bundle: Bundle.main, value: "Cyborg-Blue", comment: "appearance settings, cyborg blue app icon")
+    }()
+    
+    static let appIconCyborgRed: String = {
+        return NSLocalizedString("settingsviews_appIconCyborgRed", tableName: filename, bundle: Bundle.main, value: "Cyborg-Red", comment: "appearance settings, cyborg red app icon")
+    }()
+    
     // MARK: - Section Home Screen
     
     static let sectionTitleHomeScreen: String = {

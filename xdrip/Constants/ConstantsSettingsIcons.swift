@@ -12,6 +12,7 @@ enum ConstantsSettingsIcons {
     
     // Settings section title icons
     static let alertSettingsIcon: String = "⏰ "
+    static let appearanceSettingsIcon: String = "🎨 "
     static let appleWatchSettingsIcon: String = "⌚️ "
     static let calendarEventSettingsIcon: String = "📆 "
     static let contactImageSettingsIcon: String = "☎️ "
