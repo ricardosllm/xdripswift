@@ -487,6 +487,29 @@ extension UserDefaults {
         
         /// carb absorption delay in minutes
         case carbAbsorptionDelay = "carbAbsorptionDelay"
+        
+        // MARK: - MDI Loop Emulation
+        
+        /// enable MDI loop emulation feature
+        case mdiLoopEnabled = "mdiLoopEnabled"
+        
+        /// enable MDI loop notifications
+        case mdiNotificationsEnabled = "mdiNotificationsEnabled"
+        
+        /// show prediction impact in notifications
+        case mdiShowPredictionImpact = "mdiShowPredictionImpact"
+        
+        /// notification urgency threshold - only notify if predicted to go outside this range
+        case mdiNotificationUrgencyThreshold = "mdiNotificationUrgencyThreshold"
+        
+        /// enable pre-meal reminders based on patterns
+        case mdiPreMealRemindersEnabled = "mdiPreMealRemindersEnabled"
+        
+        /// notification sound enabled
+        case mdiNotificationSoundEnabled = "mdiNotificationSoundEnabled"
+        
+        /// include graph in notification
+        case mdiIncludeGraphInNotification = "mdiIncludeGraphInNotification"
     }
     
     
@@ -1299,6 +1322,90 @@ extension UserDefaults {
         }
         set {
             set(newValue, forKey: Key.carbAbsorptionDelay.rawValue)
+        }
+    }
+    
+    // MARK: - MDI Loop Emulation Settings
+    
+    /// enable MDI loop emulation feature
+    @objc dynamic var mdiLoopEnabled: Bool {
+        get {
+            return bool(forKey: Key.mdiLoopEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiLoopEnabled.rawValue)
+        }
+    }
+    
+    /// enable MDI loop notifications
+    @objc dynamic var mdiNotificationsEnabled: Bool {
+        get {
+            // Default to true when MDI loop is first enabled
+            if object(forKey: Key.mdiNotificationsEnabled.rawValue) == nil {
+                return true
+            }
+            return bool(forKey: Key.mdiNotificationsEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiNotificationsEnabled.rawValue)
+        }
+    }
+    
+    /// show prediction impact in notifications
+    @objc dynamic var mdiShowPredictionImpact: Bool {
+        get {
+            // Default to true
+            if object(forKey: Key.mdiShowPredictionImpact.rawValue) == nil {
+                return true
+            }
+            return bool(forKey: Key.mdiShowPredictionImpact.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiShowPredictionImpact.rawValue)
+        }
+    }
+    
+    /// notification urgency threshold - only notify if predicted to go outside this range
+    var mdiNotificationUrgencyThreshold: String {
+        get {
+            return string(forKey: Key.mdiNotificationUrgencyThreshold.rawValue) ?? "high"
+        }
+        set {
+            set(newValue, forKey: Key.mdiNotificationUrgencyThreshold.rawValue)
+        }
+    }
+    
+    /// enable pre-meal reminders based on patterns
+    @objc dynamic var mdiPreMealRemindersEnabled: Bool {
+        get {
+            return bool(forKey: Key.mdiPreMealRemindersEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiPreMealRemindersEnabled.rawValue)
+        }
+    }
+    
+    /// notification sound enabled
+    @objc dynamic var mdiNotificationSoundEnabled: Bool {
+        get {
+            // Default to true
+            if object(forKey: Key.mdiNotificationSoundEnabled.rawValue) == nil {
+                return true
+            }
+            return bool(forKey: Key.mdiNotificationSoundEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiNotificationSoundEnabled.rawValue)
+        }
+    }
+    
+    /// include graph in notification
+    @objc dynamic var mdiIncludeGraphInNotification: Bool {
+        get {
+            return bool(forKey: Key.mdiIncludeGraphInNotification.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiIncludeGraphInNotification.rawValue)
         }
     }
     

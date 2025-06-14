@@ -167,6 +167,7 @@ xcodebuild test -workspace xdrip.xcworkspace -scheme xdrip -destination 'platfor
 4. **Documentation**: Update this file with significant architectural changes
 5. **Performance**: Consider battery impact for background operations
 6. **Planning**: Store implementation plans and documentation in `/claude/` folder
+7. **Pre-commit Testing**: ALWAYS build and test the app on iPhone before committing any changes. This should be the last step before running git commit.
 
 ## Claude Folder
 

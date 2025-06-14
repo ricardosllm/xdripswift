@@ -268,6 +268,9 @@
 		8CA98B4B2DF83CB300399CE8 /* PredictionPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA98B3F2DF83CB300399CE8 /* PredictionPoint.swift */; };
 		8CA98B4C2DF83CB300399CE8 /* TrendLineModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA98B402DF83CB300399CE8 /* TrendLineModel.swift */; };
 		8CA98B4D2DF83CB300399CE8 /* PredictionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA98B3E2DF83CB300399CE8 /* PredictionManager.swift */; };
+		8CB7DDBE2DFDCD0200B83BB5 /* MDILoopManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDBB2DFDCD0200B83BB5 /* MDILoopManager.swift */; };
+		8CB7DDBF2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */; };
+		8CB7DDC12DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC02DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift */; };
 		CE1B2FE025D0264B00F642F5 /* LaunchScreen.strings in Resources */ = {isa = PBXBuildFile; fileRef = CE1B2FD125D0264900F642F5 /* LaunchScreen.strings */; };
 		CE1B2FE125D0264B00F642F5 /* Main.strings in Resources */ = {isa = PBXBuildFile; fileRef = CE1B2FD425D0264900F642F5 /* Main.strings */; };
 		D400F8032778BD8000B57648 /* TextsTreatmentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D400F8022778BD8000B57648 /* TextsTreatmentsView.swift */; };
@@ -1122,6 +1125,9 @@
 		8CA98B3E2DF83CB300399CE8 /* PredictionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PredictionManager.swift; sourceTree = "<group>"; };
 		8CA98B3F2DF83CB300399CE8 /* PredictionPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PredictionPoint.swift; sourceTree = "<group>"; };
 		8CA98B402DF83CB300399CE8 /* TrendLineModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendLineModel.swift; sourceTree = "<group>"; };
+		8CB7DDBB2DFDCD0200B83BB5 /* MDILoopManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDILoopManager.swift; sourceTree = "<group>"; };
+		8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDILoopManagerProtocol.swift; sourceTree = "<group>"; };
+		8CB7DDC02DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewMDILoopSettingsViewModel.swift; sourceTree = "<group>"; };
 		CE1B2FC825D0261500F642F5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Alerts.strings; sourceTree = "<group>"; };
 		CE1B2FCD25D0264900F642F5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AlertTypesSettingsView.strings; sourceTree = "<group>"; };
 		CE1B2FCE25D0264900F642F5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/WatlaaView.strings; sourceTree = "<group>"; };
@@ -2304,6 +2310,15 @@
 			path = Prediction;
 			sourceTree = "<group>";
 		};
+		8CB7DDBD2DFDCD0200B83BB5 /* MDI */ = {
+			isa = PBXGroup;
+			children = (
+				8CB7DDBB2DFDCD0200B83BB5 /* MDILoopManager.swift */,
+				8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */,
+			);
+			path = MDI;
+			sourceTree = "<group>";
+		};
 		D4028CBE2774A4B900341476 /* Treatments */ = {
 			isa = PBXGroup;
 			children = (
@@ -2748,6 +2763,7 @@
 		F85DC2F621D25E3A00B9F74A /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				8CB7DDBD2DFDCD0200B83BB5 /* MDI */,
 				8CA98B412DF83CB300399CE8 /* Prediction */,
 				F821CF48229BF43A005C1E43 /* Alerts */,
 				F821CF54229BF43A005C1E43 /* Application */,
@@ -3206,6 +3222,7 @@
 		F8B3A837227F090D004BA588 /* SettingsViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				8CB7DDC02DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift */,
 				8C6E015B2DFAD52200E01F31 /* SettingsViewAppearanceSettingsViewModel.swift */,
 				F8B3A838227F090D004BA588 /* SettingsViewAlertSettingsViewModel.swift */,
 				4767BDD52BD51E36009BC2EC /* SettingsViewAppleWatchSettingsViewModel.swift */,
@@ -4679,6 +4696,8 @@
 				F821CF9D22AEF483005C1E43 /* BGReadingSpeaker.swift in Sources */,
 				F8297F4E238DCAD800D74D66 /* BluetoothPeripheralsViewController.swift in Sources */,
 				F8B3A848227F090E004BA588 /* SettingsViewHealthKitSettingsViewModel.swift in Sources */,
+				8CB7DDBE2DFDCD0200B83BB5 /* MDILoopManager.swift in Sources */,
+				8CB7DDBF2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift in Sources */,
 				F8025E5021EE746400ECF0C0 /* Calibrator.swift in Sources */,
 				F85DC2F421CFE3D400B9F74A /* Sensor+CoreDataClass.swift in Sources */,
 				F8B3A844227F090E004BA588 /* SettingsViewAlertSettingsViewModel.swift in Sources */,
@@ -4705,6 +4724,7 @@
 				47DB06C62A6FC72000267BE3 /* SettingsViewCalendarEventsSettingsViewModel.swift in Sources */,
 				F830991C23C2909E005741DF /* Watlaa+CoreDataClass.swift in Sources */,
 				47EDD1422BDD4FE500C5A286 /* XDripWidgetAttributes.swift in Sources */,
+				8CB7DDC12DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift in Sources */,
 				F808D2CC240328FA0084B5DB /* Bubble+CoreDataClass.swift in Sources */,
 				F8A1586122EDB844007F5B5D /* ConstantsNotifications.swift in Sources */,
 				F8DF765523E34FD500063910 /* DexcomG5+CoreDataProperties.swift in Sources */,

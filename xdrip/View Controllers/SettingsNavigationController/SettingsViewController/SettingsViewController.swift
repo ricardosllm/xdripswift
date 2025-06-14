@@ -47,6 +47,9 @@ final class SettingsViewController: UIViewController {
         /// predictions settings - integrated into home screen settings
         // case predictions
         
+        /// MDI Loop settings
+        case mdiLoop
+        
         /// alarms
         case alarms
         
@@ -103,6 +106,8 @@ final class SettingsViewController: UIViewController {
                 return SettingsViewStatisticsSettingsViewModel()
             // case .predictions:
             //     return SettingsViewPredictionSettingsViewModel()
+            case .mdiLoop:
+                return SettingsViewMDILoopSettingsViewModel()
             case .alarms:
                 return SettingsViewAlertSettingsViewModel()
             case .nightscout:
