@@ -271,6 +271,7 @@
 		8CB7DDBE2DFDCD0200B83BB5 /* MDILoopManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDBB2DFDCD0200B83BB5 /* MDILoopManager.swift */; };
 		8CB7DDBF2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */; };
 		8CB7DDC12DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC02DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift */; };
+		8CB7DDC32DFDD2B600B83BB5 /* MDINotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC22DFDD2B600B83BB5 /* MDINotificationManager.swift */; };
 		CE1B2FE025D0264B00F642F5 /* LaunchScreen.strings in Resources */ = {isa = PBXBuildFile; fileRef = CE1B2FD125D0264900F642F5 /* LaunchScreen.strings */; };
 		CE1B2FE125D0264B00F642F5 /* Main.strings in Resources */ = {isa = PBXBuildFile; fileRef = CE1B2FD425D0264900F642F5 /* Main.strings */; };
 		D400F8032778BD8000B57648 /* TextsTreatmentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D400F8022778BD8000B57648 /* TextsTreatmentsView.swift */; };
@@ -1128,6 +1129,7 @@
 		8CB7DDBB2DFDCD0200B83BB5 /* MDILoopManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDILoopManager.swift; sourceTree = "<group>"; };
 		8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDILoopManagerProtocol.swift; sourceTree = "<group>"; };
 		8CB7DDC02DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewMDILoopSettingsViewModel.swift; sourceTree = "<group>"; };
+		8CB7DDC22DFDD2B600B83BB5 /* MDINotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDINotificationManager.swift; sourceTree = "<group>"; };
 		CE1B2FC825D0261500F642F5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Alerts.strings; sourceTree = "<group>"; };
 		CE1B2FCD25D0264900F642F5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AlertTypesSettingsView.strings; sourceTree = "<group>"; };
 		CE1B2FCE25D0264900F642F5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/WatlaaView.strings; sourceTree = "<group>"; };
@@ -2313,6 +2315,7 @@
 		8CB7DDBD2DFDCD0200B83BB5 /* MDI */ = {
 			isa = PBXGroup;
 			children = (
+				8CB7DDC22DFDD2B600B83BB5 /* MDINotificationManager.swift */,
 				8CB7DDBB2DFDCD0200B83BB5 /* MDILoopManager.swift */,
 				8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */,
 			);
@@ -4555,6 +4558,7 @@
 				4767BDD62BD51E36009BC2EC /* SettingsViewAppleWatchSettingsViewModel.swift in Sources */,
 				F8F9722E23A5915900C3F17D /* M5StackTransmitterOpCode.swift in Sources */,
 				8C1E7CA42DF88C81003BFF4B /* InsulinProfile.swift in Sources */,
+				8CB7DDC32DFDD2B600B83BB5 /* MDINotificationManager.swift in Sources */,
 				8C1E7CA52DF88C81003BFF4B /* COBCalculator.swift in Sources */,
 				8C1E7CA62DF88C81003BFF4B /* IOBCalculator.swift in Sources */,
 				47D9BC952A78498500AB85B2 /* BgReadingsDetailView.swift in Sources */,

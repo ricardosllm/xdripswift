@@ -16,6 +16,9 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     /// Timer for loop cycles
     private var loopTimer: Timer?
     
+    /// Notification manager
+    private let notificationManager = MDINotificationManager.shared
+    
     /// Last recommendation made
     private(set) var lastRecommendation: MDIRecommendation?
     
@@ -23,7 +26,7 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     private var lastRecommendationTime: Date?
     
     /// Log for MDI operations
-    private let log = OSLog(subsystem: ConstantsLog.subSystem, category: "MDILoopManager")
+    private let log = OSLog(subsystem: ConstantsLog.subSystem, category: ConstantsLog.categoryRootView)
     
     /// Check if MDI Loop is enabled
     var isEnabled: Bool {
@@ -68,6 +71,17 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
         }
         
         isRunning = true
+        
+        // Request notification permissions if needed
+        notificationManager.requestNotificationPermission { [weak self] granted in
+            guard let self = self else { return }
+            
+            if granted {
+                os_log("Notification permissions granted for MDI Loop", log: self.log, type: .info)
+            } else {
+                os_log("Notification permissions denied for MDI Loop", log: self.log, type: .error)
+            }
+        }
         
         // Run initial cycle
         runLoopCycle()
@@ -126,12 +140,17 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
         // Analyze and generate recommendation if needed
         if let recommendation = analyzeAndGenerateRecommendation(
             currentReading: latestReading,
-            recentReadings: recentReadings
+            recentReadings: Array(recentReadings)
         ) {
             lastRecommendation = recommendation
             lastRecommendationTime = Date()
             
             os_log("Generated MDI recommendation: %{public}@", log: log, type: .info, recommendation.reason)
+            
+            // Send notification
+            notificationManager.sendNotification(for: recommendation)
+            
+            // Notify delegate
             delegate?.mdiLoopManager(self, didGenerateRecommendation: recommendation)
         }
     }
