@@ -43,6 +43,8 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     
     private var coreDataManager: CoreDataManager?
     private var bgReadingsAccessor: BgReadingsAccessor?
+    // TODO: Enable when MDIBolusCalculator is added to project
+    // private var bolusCalculator: MDIBolusCalculator?
     
     // MARK: - Initialization
     
@@ -54,6 +56,8 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     func configure(coreDataManager: CoreDataManager) {
         self.coreDataManager = coreDataManager
         self.bgReadingsAccessor = BgReadingsAccessor(coreDataManager: coreDataManager)
+        // TODO: Enable when MDIBolusCalculator is added to project
+        // self.bolusCalculator = MDIBolusCalculator(coreDataManager: coreDataManager)
     }
     
     // MARK: - Public Methods
@@ -181,17 +185,13 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
         // Get current glucose value
         let currentGlucose = currentReading.calculatedValue
         
-        // Calculate trend if we have enough readings
-        let trend = calculateTrend(from: recentReadings)
-        
         // Get user settings
+        let targetGlucose = UserDefaults.standard.targetMarkValueInUserChosenUnit
         let highThreshold = UserDefaults.standard.highMarkValue
         let urgentHighThreshold = UserDefaults.standard.urgentHighMarkValue
         let lowThreshold = UserDefaults.standard.lowMarkValue
         let urgentLowThreshold = UserDefaults.standard.urgentLowMarkValue
         let notificationThreshold = UserDefaults.standard.mdiNotificationUrgencyThreshold
-        
-        // Simple decision logic for now (will be enhanced with MDIBolusCalculator)
         
         // Check for urgent low - always notify regardless of threshold setting
         if currentGlucose <= urgentLowThreshold {
@@ -204,7 +204,8 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
             )
         }
         
-        // Check for urgent high
+        // For high glucose, use simple calculation for now
+        // TODO: Use advanced bolus calculator when MDIBolusCalculator is added to project
         if currentGlucose >= urgentHighThreshold {
             return MDIRecommendation(
                 type: .correctionBolus,
@@ -217,22 +218,12 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
         
         // Check notification threshold setting
         if notificationThreshold == "urgent" {
-            // Only urgent notifications, we've already checked those above
+            // Only urgent notifications
             return nil
         }
         
-        // Check for high with rising trend
-        if currentGlucose >= highThreshold && trend > 0 {
-            return MDIRecommendation(
-                type: .correctionBolus,
-                dose: calculateSimpleCorrectionDose(glucose: currentGlucose),
-                reason: "Glucose is high and rising",
-                urgency: .high,
-                expiresAt: Date().addingTimeInterval(1800) // 30 minutes
-            )
-        }
-        
         // Check for low with falling trend
+        let trend = calculateTrend(from: recentReadings)
         if currentGlucose <= lowThreshold && trend < 0 {
             return MDIRecommendation(
                 type: .carbsNeeded,

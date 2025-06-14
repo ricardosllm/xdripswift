@@ -898,6 +898,9 @@ final class RootViewController: UIViewController, ObservableObject {
         // add observer for followerKeepAliveType, to reset the app badge notification if in follower mode and keep-alive is set to disabled
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.followerBackgroundKeepAliveType.rawValue, options: .new, context: nil)
         
+        // add observer for MDI Loop enabled setting
+        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.mdiLoopEnabled.rawValue, options: .new, context: nil)
+        
         // add observer for the last heartbeat timestamp in order to update the UI
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.timeStampOfLastHeartBeat.rawValue, options: .new, context: nil)
         
@@ -1171,6 +1174,15 @@ final class RootViewController: UIViewController, ObservableObject {
         
         // setup loopManager
         loopManager = LoopManager(coreDataManager: coreDataManager)
+        
+        // setup MDI Loop Manager
+        MDILoopManager.shared.configure(coreDataManager: coreDataManager)
+        MDILoopManager.shared.delegate = self
+        
+        // Start MDI Loop if enabled
+        if UserDefaults.standard.mdiLoopEnabled {
+            MDILoopManager.shared.startLoop()
+        }
         
         // setup dexcomShareUploadManager
         dexcomShareUploadManager = DexcomShareUploadManager(bgReadingsAccessor: bgReadingsAccessor, messageHandler: { (title:String, message:String) in
@@ -1769,6 +1781,10 @@ final class RootViewController: UIViewController, ObservableObject {
                 // reset the flag
                 UserDefaults.standard.predictionsUpdateNeeded = false
             }
+            
+        case UserDefaults.Key.mdiLoopEnabled:
+            // Start or stop MDI Loop based on settings
+            updateMDILoopStatus()
             
         default:
             break
@@ -4066,6 +4082,11 @@ extension RootViewController: UNUserNotificationCenterDelegate {
             // call completionhandler to show the notification even though the app is in the foreground, without sound
             completionHandler([.banner, .list])
             
+        } else if notification.request.content.categoryIdentifier == "MDI_RECOMMENDATION" {
+            
+            // MDI Loop recommendation notification - show it even when app is in foreground
+            completionHandler([.banner, .list, .sound])
+            
         }
     }
     
@@ -4103,6 +4124,14 @@ extension RootViewController: UNUserNotificationCenterDelegate {
                 
                 trace("     userNotificationCenter didReceive, user pressed an alert notification to open the app", log: log, category: ConstantsLog.categoryRootView, type: .info)
                 PickerViewControllerModal.displayPickerViewController(pickerViewData: pickerViewData, parentController: self)
+                
+            } else if response.notification.request.content.categoryIdentifier == "MDI_RECOMMENDATION" {
+                
+                // Handle MDI notification response
+                trace("     userNotificationCenter didReceive, user interacted with MDI notification", log: log, category: ConstantsLog.categoryRootView, type: .info)
+                
+                // Let MDINotificationManager handle the action
+                MDINotificationManager.shared.userNotificationCenter(center, didReceive: response, withCompletionHandler: {})
                 
             } else {
                 // it as also not an alert notification that the user clicked, there might come in other types of notifications in the future
@@ -4245,4 +4274,60 @@ extension RootViewController: UIGestureRecognizerDelegate {
         
     }
     
+}
+
+// MARK: - MDILoopManagerDelegate
+
+extension RootViewController: MDILoopManagerDelegate {
+    
+    func mdiLoopManager(_ manager: MDILoopManagerProtocol, didChangeStatus isRunning: Bool) {
+        trace("MDI Loop status changed to: %{public}@", log: self.log, category: ConstantsLog.categoryRootView, type: .info, isRunning.description)
+        
+        // Update UI if needed
+        DispatchQueue.main.async { [weak self] in
+            // Could update a status indicator in the future
+            _ = self
+        }
+    }
+    
+    func mdiLoopManager(_ manager: MDILoopManagerProtocol, didGenerateRecommendation recommendation: MDIRecommendation) {
+        trace("MDI Loop generated recommendation: %{public}@", log: self.log, category: ConstantsLog.categoryRootView, type: .info, recommendation.reason)
+        
+        // The notification is already sent by MDINotificationManager
+        // Here we could update UI or log to Core Data in the future
+    }
+    
+    func mdiLoopManager(_ manager: MDILoopManagerProtocol, didEncounterError error: Error) {
+        trace("MDI Loop failed with error: %{public}@", log: self.log, category: ConstantsLog.categoryRootView, type: .error, error.localizedDescription)
+        
+        // Show alert to user
+        DispatchQueue.main.async { [weak self] in
+            let alert = UIAlertController(
+                title: Texts_Common.warning,
+                message: "MDI Loop error: \(error.localizedDescription)",
+                actionHandler: nil
+            )
+            self?.present(alert, animated: true, completion: nil)
+        }
+    }
+}
+
+// MARK: - MDI Loop Control
+
+extension RootViewController {
+    
+    /// Start or stop MDI Loop based on settings
+    func updateMDILoopStatus() {
+        let mdiLoopManager = MDILoopManager.shared
+        
+        if UserDefaults.standard.mdiLoopEnabled {
+            // Start the loop if it's not already running
+            if !mdiLoopManager.isRunning {
+                mdiLoopManager.startLoop()
+            }
+        } else {
+            // Stop the loop if it's running
+            mdiLoopManager.stopLoop()
+        }
+    }
 }
