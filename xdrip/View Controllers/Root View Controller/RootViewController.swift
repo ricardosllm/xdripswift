@@ -4469,23 +4469,177 @@ extension RootViewController {
                 trace("COB predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.cob.description)
                 
                 // Show alert with results
-                let message = """
-                IOB Predictions: \(predictions.iob.prefix(5).map { String(format: "%.0f", $0) }.joined(separator: ", "))...
-                COB Predictions: \(predictions.cob.prefix(5).map { String(format: "%.0f", $0) }.joined(separator: ", "))...
-                ZT Predictions: \(predictions.zt.prefix(5).map { String(format: "%.0f", $0) }.joined(separator: ", "))...
-                UAM Predictions: \(predictions.uam.prefix(5).map { String(format: "%.0f", $0) }.joined(separator: ", "))...
+                let isMgDl = UserDefaults.standard.bloodGlucoseUnitIsMgDl
+                let unitString = isMgDl ? "mg/dL" : "mmol/L"
+                
+                // Debug: Log raw prediction values
+                trace("Raw IOB predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.iob.description)
+                trace("Raw COB predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.cob.description)
+                trace("Raw ZT predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.zt.description)
+                trace("Raw UAM predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.uam.description)
+                
+                // Convert predictions to user's preferred unit
+                let iobVals = predictions.iob.prefix(5).map { isMgDl ? String(format: "%.0f", $0) : String(format: "%.1f", $0 / 18.0) }
+                let cobVals = predictions.cob.prefix(5).map { isMgDl ? String(format: "%.0f", $0) : String(format: "%.1f", $0 / 18.0) }
+                let ztVals = predictions.zt.prefix(5).map { isMgDl ? String(format: "%.0f", $0) : String(format: "%.1f", $0 / 18.0) }
+                let uamVals = predictions.uam.prefix(5).map { isMgDl ? String(format: "%.0f", $0) : String(format: "%.1f", $0 / 18.0) }
+                
+                // Get current BG
+                let currentBG = bgReadings.first?.calculatedValue ?? 0
+                let currentBGStr = isMgDl ? String(format: "%.0f", currentBG) : String(format: "%.1f", currentBG / 18.0)
+                
+                // Count treatments
+                let insulinCount = treatments.filter { $0.treatmentType == .Insulin }.count
+                let carbCount = treatments.filter { $0.treatmentType == .Carbs }.count
+                let recentInsulin = treatments.filter { $0.treatmentType == .Insulin && $0.date > Date().addingTimeInterval(-4 * 3600) }
+                let recentCarbs = treatments.filter { $0.treatmentType == .Carbs && $0.date > Date().addingTimeInterval(-3 * 3600) }
+                let totalInsulin = recentInsulin.reduce(0.0) { $0 + $1.value }
+                let totalCarbs = recentCarbs.reduce(0.0) { $0 + $1.value }
+                
+                // Get profile settings
+                let dia = UserDefaults.standard.object(forKey: "insulinDuration") as? Double ?? 4.0
+                let carbRatio = UserDefaults.standard.object(forKey: "carbRatio") as? Double ?? 10.0
+                let isf = UserDefaults.standard.object(forKey: "insulinSensitivityFactor") as? Double ?? 50.0
+                
+                let debugVersion = "v5.1-iobarray-fix" // Update this with each build
+                
+                // Debug: Test with hardcoded values
+                let testIOB = 2.0 // 2 units
+                let testISF = 50.0 // 50 mg/dL per unit
+                let testDIA = 4.0 // hours
+                let testCOB = 10.0 // 10g carbs
+                let testCarbRatio = 15.0 // 15g per unit
+                
+                // Expected effects:
+                // IOB should drop BG by: 2 units * 50 mg/dL = 100 mg/dL over 4 hours
+                // COB should raise BG by: 10g / 15g/u * 50 mg/dL = 33 mg/dL over 3 hours
+                
+                // Get all debug logs from iAPSPredictionManager
+                let allDebugLogs = iapsManager.getDebugLogs()
+                
+                let debugInfo = """
+                
+                Debug Math Test:
+                IOB effect: \(testIOB) units * \(testISF) ISF = \(testIOB * testISF) mg/dL drop
+                COB effect: \(testCOB)g / \(testCarbRatio) ratio * \(testISF) ISF = \(testCOB / testCarbRatio * testISF) mg/dL rise
+                
+                Debug Logs:
+                \(allDebugLogs)
                 """
                 
-                let alert = UIAlertController(title: "iAPS Predictions", message: message, actionHandler: nil)
+                let message = """
+                Debug Version: \(debugVersion)
+                Current BG: \(currentBGStr) \(unitString)
+                
+                Profile Settings:
+                DIA: \(dia) hours, ISF: \(isf), Carb Ratio: \(carbRatio)
+                
+                Recent Treatments:
+                Total Insulin (last \(dia)h): \(String(format: "%.1f", totalInsulin)) units
+                Total Carbs (last 3h): \(String(format: "%.0f", totalCarbs)) g
+                Found \(insulinCount) insulin, \(carbCount) carb entries
+                
+                Predictions (next 25 min):
+                IOB: \(iobVals.joined(separator: ", "))...
+                COB: \(cobVals.joined(separator: ", "))...
+                ZT: \(ztVals.joined(separator: ", "))...
+                UAM: \(uamVals.joined(separator: ", "))...
+                
+                IOB = Insulin on Board effect
+                COB = Carbs on Board effect
+                ZT = Zero Temp (no insulin)
+                UAM = Unannounced Meal
+                \(debugInfo)
+                """
+                
+                let alert = UIAlertController(title: "iAPS Predictions", message: message, preferredStyle: .alert)
+                
+                // Add OK button
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                
+                // Add Copy button
+                alert.addAction(UIAlertAction(title: "Copy Debug Info", style: .default) { _ in
+                    UIPasteboard.general.string = message
+                    
+                    // Show confirmation
+                    let copyAlert = UIAlertController(title: "Copied!", message: "Debug info copied to clipboard", preferredStyle: .alert)
+                    copyAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(copyAlert, animated: true)
+                })
+                
                 self.present(alert, animated: true, completion: nil)
             } else {
                 trace("Failed to generate iAPS predictions", log: log, category: ConstantsLog.categoryRootView, type: .error)
-                let alert = UIAlertController(title: "iAPS Test Failed", message: "Could not generate predictions", actionHandler: nil)
+                
+                let debugVersion = "v5.0-iob-fix"
+                let errorMessage = """
+                Debug Version: \(debugVersion)
+                
+                Failed to generate predictions
+                
+                Data counts:
+                BG Readings: \(bgReadings.count)
+                Treatments: \(treatments.count)
+                
+                Recent treatments:
+                \(treatments.prefix(5).map { t in
+                    "\(t.treatmentType.asString()): \(t.value) at \(t.date.formatted())"
+                }.joined(separator: "\n"))
+                
+                Debug logs:
+                \(iapsManager.getDebugLogs())
+                """
+                
+                let alert = UIAlertController(title: "iAPS Test Failed", message: errorMessage, preferredStyle: .alert)
+                
+                // Add OK button
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                
+                // Add Copy button
+                alert.addAction(UIAlertAction(title: "Copy Debug Info", style: .default) { _ in
+                    UIPasteboard.general.string = errorMessage
+                    
+                    // Show confirmation
+                    let copyAlert = UIAlertController(title: "Copied!", message: "Debug info copied to clipboard", preferredStyle: .alert)
+                    copyAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(copyAlert, animated: true)
+                })
+                
                 self.present(alert, animated: true, completion: nil)
             }
         } else {
             trace("iAPS JavaScript execution test failed", log: log, category: ConstantsLog.categoryRootView, type: .error)
-            let alert = UIAlertController(title: "iAPS Test Failed", message: "JavaScript engine not working", actionHandler: nil)
+            
+            let debugVersion = "v4.2-debug-logs"
+            let jsErrorMessage = """
+            Debug Version: \(debugVersion)
+            
+            JavaScript engine test failed.
+            
+            This means the iAPS JavaScript files
+            could not be loaded or executed.
+            
+            Check that bundle contains:
+            - iob.js
+            - meal.js
+            - determine-basal.js
+            """
+            
+            let alert = UIAlertController(title: "iAPS Test Failed", message: jsErrorMessage, preferredStyle: .alert)
+            
+            // Add OK button
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            
+            // Add Copy button
+            alert.addAction(UIAlertAction(title: "Copy Debug Info", style: .default) { _ in
+                UIPasteboard.general.string = jsErrorMessage
+                
+                // Show confirmation
+                let copyAlert = UIAlertController(title: "Copied!", message: "Debug info copied to clipboard", preferredStyle: .alert)
+                copyAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(copyAlert, animated: true)
+            })
+            
             self.present(alert, animated: true, completion: nil)
         }
     }
