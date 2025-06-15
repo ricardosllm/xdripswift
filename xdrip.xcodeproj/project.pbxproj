@@ -221,6 +221,15 @@
 		8C1E7CA42DF88C81003BFF4B /* InsulinProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E7CA22DF88C81003BFF4B /* InsulinProfile.swift */; };
 		8C1E7CA52DF88C81003BFF4B /* COBCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E7CA12DF88C81003BFF4B /* COBCalculator.swift */; };
 		8C1E7CA62DF88C81003BFF4B /* IOBCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C1E7CA32DF88C81003BFF4B /* IOBCalculator.swift */; };
+		8C519DF82DFEE0CA00431C31 /* meal.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C519DF52DFEE0CA00431C31 /* meal.js */; };
+		8C519DF92DFEE0CA00431C31 /* determine-basal.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C519DF22DFEE0CA00431C31 /* determine-basal.js */; };
+		8C519DFA2DFEE0CA00431C31 /* autotune-core.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C519DEF2DFEE0CA00431C31 /* autotune-core.js */; };
+		8C519DFB2DFEE0CA00431C31 /* autosens.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C519DEE2DFEE0CA00431C31 /* autosens.js */; };
+		8C519DFC2DFEE0CA00431C31 /* autotune-prep.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C519DF02DFEE0CA00431C31 /* autotune-prep.js */; };
+		8C519DFD2DFEE0CA00431C31 /* basal-set-temp.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C519DF12DFEE0CA00431C31 /* basal-set-temp.js */; };
+		8C519DFE2DFEE0CA00431C31 /* glucose-get-last.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C519DF32DFEE0CA00431C31 /* glucose-get-last.js */; };
+		8C519DFF2DFEE0CA00431C31 /* profile.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C519DF62DFEE0CA00431C31 /* profile.js */; };
+		8C519E002DFEE0CA00431C31 /* iob.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C519DF42DFEE0CA00431C31 /* iob.js */; };
 		8C6E015C2DFAD52200E01F31 /* SettingsViewAppearanceSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6E015B2DFAD52200E01F31 /* SettingsViewAppearanceSettingsViewModel.swift */; };
 		8C6E01952DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01932DFADBA900E01F31 /* AppIcon-Cyborg-Red@2x.png */; };
 		8C6E01962DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 8C6E01912DFADBA900E01F31 /* AppIcon-Cyborg-Dark@2x.png */; };
@@ -272,6 +281,16 @@
 		8CB7DDBF2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */; };
 		8CB7DDC12DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC02DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift */; };
 		8CB7DDC32DFDD2B600B83BB5 /* MDINotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC22DFDD2B600B83BB5 /* MDINotificationManager.swift */; };
+		8CB7DDCC2DFEDCB200B83BB5 /* CarbsEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC62DFEDCB200B83BB5 /* CarbsEntry.swift */; };
+		8CB7DDCD2DFEDCB200B83BB5 /* JSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC82DFEDCB200B83BB5 /* JSON.swift */; };
+		8CB7DDCE2DFEDCB200B83BB5 /* Suggestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC92DFEDCB200B83BB5 /* Suggestion.swift */; };
+		8CB7DDCF2DFEDCB200B83BB5 /* BloodGlucose.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC52DFEDCB200B83BB5 /* BloodGlucose.swift */; };
+		8CB7DDD02DFEDCB200B83BB5 /* Autosens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC42DFEDCB200B83BB5 /* Autosens.swift */; };
+		8CB7DDD12DFEDCB200B83BB5 /* IOBEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC72DFEDCB200B83BB5 /* IOBEntry.swift */; };
+		8CB7DDD82DFEDCC900B83BB5 /* Script.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDD52DFEDCC900B83BB5 /* Script.swift */; };
+		8CB7DDD92DFEDCC900B83BB5 /* iAPSPredictionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDD22DFEDCC900B83BB5 /* iAPSPredictionManager.swift */; };
+		8CB7DDDA2DFEDCC900B83BB5 /* JavaScriptWorker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDD32DFEDCC900B83BB5 /* JavaScriptWorker.swift */; };
+		8CB7DDDB2DFEDCC900B83BB5 /* SyncAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDD62DFEDCC900B83BB5 /* SyncAccess.swift */; };
 		CE1B2FE025D0264B00F642F5 /* LaunchScreen.strings in Resources */ = {isa = PBXBuildFile; fileRef = CE1B2FD125D0264900F642F5 /* LaunchScreen.strings */; };
 		CE1B2FE125D0264B00F642F5 /* Main.strings in Resources */ = {isa = PBXBuildFile; fileRef = CE1B2FD425D0264900F642F5 /* Main.strings */; };
 		D400F8032778BD8000B57648 /* TextsTreatmentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D400F8022778BD8000B57648 /* TextsTreatmentsView.swift */; };
@@ -1111,6 +1130,15 @@
 		8C1E7CA12DF88C81003BFF4B /* COBCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = COBCalculator.swift; sourceTree = "<group>"; };
 		8C1E7CA22DF88C81003BFF4B /* InsulinProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsulinProfile.swift; sourceTree = "<group>"; };
 		8C1E7CA32DF88C81003BFF4B /* IOBCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBCalculator.swift; sourceTree = "<group>"; };
+		8C519DEE2DFEE0CA00431C31 /* autosens.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = autosens.js; sourceTree = "<group>"; };
+		8C519DEF2DFEE0CA00431C31 /* autotune-core.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "autotune-core.js"; sourceTree = "<group>"; };
+		8C519DF02DFEE0CA00431C31 /* autotune-prep.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "autotune-prep.js"; sourceTree = "<group>"; };
+		8C519DF12DFEE0CA00431C31 /* basal-set-temp.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "basal-set-temp.js"; sourceTree = "<group>"; };
+		8C519DF22DFEE0CA00431C31 /* determine-basal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "determine-basal.js"; sourceTree = "<group>"; };
+		8C519DF32DFEE0CA00431C31 /* glucose-get-last.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "glucose-get-last.js"; sourceTree = "<group>"; };
+		8C519DF42DFEE0CA00431C31 /* iob.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = iob.js; sourceTree = "<group>"; };
+		8C519DF52DFEE0CA00431C31 /* meal.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = meal.js; sourceTree = "<group>"; };
+		8C519DF62DFEE0CA00431C31 /* profile.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = profile.js; sourceTree = "<group>"; };
 		8C6E015B2DFAD52200E01F31 /* SettingsViewAppearanceSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewAppearanceSettingsViewModel.swift; sourceTree = "<group>"; };
 		8C6E018D2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Blue@2x.png"; path = "AlternateIcons/AppIcon-Cyborg-Blue@2x.png"; sourceTree = "<group>"; };
 		8C6E018E2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "AppIcon-Cyborg-Blue@3x.png"; path = "AlternateIcons/AppIcon-Cyborg-Blue@3x.png"; sourceTree = "<group>"; };
@@ -1130,6 +1158,16 @@
 		8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDILoopManagerProtocol.swift; sourceTree = "<group>"; };
 		8CB7DDC02DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewMDILoopSettingsViewModel.swift; sourceTree = "<group>"; };
 		8CB7DDC22DFDD2B600B83BB5 /* MDINotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDINotificationManager.swift; sourceTree = "<group>"; };
+		8CB7DDC42DFEDCB200B83BB5 /* Autosens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Autosens.swift; sourceTree = "<group>"; };
+		8CB7DDC52DFEDCB200B83BB5 /* BloodGlucose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodGlucose.swift; sourceTree = "<group>"; };
+		8CB7DDC62DFEDCB200B83BB5 /* CarbsEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbsEntry.swift; sourceTree = "<group>"; };
+		8CB7DDC72DFEDCB200B83BB5 /* IOBEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBEntry.swift; sourceTree = "<group>"; };
+		8CB7DDC82DFEDCB200B83BB5 /* JSON.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSON.swift; sourceTree = "<group>"; };
+		8CB7DDC92DFEDCB200B83BB5 /* Suggestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Suggestion.swift; sourceTree = "<group>"; };
+		8CB7DDD22DFEDCC900B83BB5 /* iAPSPredictionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iAPSPredictionManager.swift; sourceTree = "<group>"; };
+		8CB7DDD32DFEDCC900B83BB5 /* JavaScriptWorker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JavaScriptWorker.swift; sourceTree = "<group>"; };
+		8CB7DDD52DFEDCC900B83BB5 /* Script.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Script.swift; sourceTree = "<group>"; };
+		8CB7DDD62DFEDCC900B83BB5 /* SyncAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncAccess.swift; sourceTree = "<group>"; };
 		CE1B2FC825D0261500F642F5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Alerts.strings; sourceTree = "<group>"; };
 		CE1B2FCD25D0264900F642F5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AlertTypesSettingsView.strings; sourceTree = "<group>"; };
 		CE1B2FCE25D0264900F642F5 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/WatlaaView.strings; sourceTree = "<group>"; };
@@ -2298,6 +2336,22 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		8C519DF72DFEE0CA00431C31 /* bundle */ = {
+			isa = PBXGroup;
+			children = (
+				8C519DEE2DFEE0CA00431C31 /* autosens.js */,
+				8C519DEF2DFEE0CA00431C31 /* autotune-core.js */,
+				8C519DF02DFEE0CA00431C31 /* autotune-prep.js */,
+				8C519DF12DFEE0CA00431C31 /* basal-set-temp.js */,
+				8C519DF22DFEE0CA00431C31 /* determine-basal.js */,
+				8C519DF32DFEE0CA00431C31 /* glucose-get-last.js */,
+				8C519DF42DFEE0CA00431C31 /* iob.js */,
+				8C519DF52DFEE0CA00431C31 /* meal.js */,
+				8C519DF62DFEE0CA00431C31 /* profile.js */,
+			);
+			path = bundle;
+			sourceTree = "<group>";
+		};
 		8CA98B412DF83CB300399CE8 /* Prediction */ = {
 			isa = PBXGroup;
 			children = (
@@ -2320,6 +2374,46 @@
 				8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */,
 			);
 			path = MDI;
+			sourceTree = "<group>";
+		};
+		8CB7DDCA2DFEDCB200B83BB5 /* iAPS */ = {
+			isa = PBXGroup;
+			children = (
+				8CB7DDC42DFEDCB200B83BB5 /* Autosens.swift */,
+				8CB7DDC52DFEDCB200B83BB5 /* BloodGlucose.swift */,
+				8CB7DDC62DFEDCB200B83BB5 /* CarbsEntry.swift */,
+				8CB7DDC72DFEDCB200B83BB5 /* IOBEntry.swift */,
+				8CB7DDC82DFEDCB200B83BB5 /* JSON.swift */,
+				8CB7DDC92DFEDCB200B83BB5 /* Suggestion.swift */,
+			);
+			path = iAPS;
+			sourceTree = "<group>";
+		};
+		8CB7DDCB2DFEDCB200B83BB5 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				8CB7DDCA2DFEDCB200B83BB5 /* iAPS */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		8CB7DDD72DFEDCC900B83BB5 /* APSAlgorithm */ = {
+			isa = PBXGroup;
+			children = (
+				8CB7DDD22DFEDCC900B83BB5 /* iAPSPredictionManager.swift */,
+				8CB7DDD32DFEDCC900B83BB5 /* JavaScriptWorker.swift */,
+				8CB7DDD52DFEDCC900B83BB5 /* Script.swift */,
+				8CB7DDD62DFEDCC900B83BB5 /* SyncAccess.swift */,
+			);
+			path = APSAlgorithm;
+			sourceTree = "<group>";
+		};
+		8CB7DDEC2DFEDD0900B83BB5 /* javascript */ = {
+			isa = PBXGroup;
+			children = (
+				8C519DF72DFEE0CA00431C31 /* bundle */,
+			);
+			path = javascript;
 			sourceTree = "<group>";
 		};
 		D4028CBE2774A4B900341476 /* Treatments */ = {
@@ -2430,6 +2524,7 @@
 		F8025E5A21F7AFA100ECF0C0 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				8CB7DDEC2DFEDD0900B83BB5 /* javascript */,
 				F8AC426621ADEBD70078C348 /* Assets.xcassets */,
 				8C6E018D2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@2x.png */,
 				8C6E018E2DFADBA900E01F31 /* AppIcon-Cyborg-Blue@3x.png */,
@@ -2766,6 +2861,7 @@
 		F85DC2F621D25E3A00B9F74A /* Managers */ = {
 			isa = PBXGroup;
 			children = (
+				8CB7DDD72DFEDCC900B83BB5 /* APSAlgorithm */,
 				8CB7DDBD2DFDCD0200B83BB5 /* MDI */,
 				8CA98B412DF83CB300399CE8 /* Prediction */,
 				F821CF48229BF43A005C1E43 /* Alerts */,
@@ -2969,6 +3065,7 @@
 		F8AC425C21ADEBD60078C348 /* xdrip */ = {
 			isa = PBXGroup;
 			children = (
+				8CB7DDCB2DFEDCB200B83BB5 /* Models */,
 				F821CF9822AE589E005C1E43 /* xdrip.entitlements */,
 				F8A5EEC5257EDC910085E660 /* xdripDebug.entitlements */,
 				F8A54B0A22D9215500934E7A /* xdrip-Bridging-Header.h */,
@@ -4348,6 +4445,15 @@
 				F821CF7D22A46CDD005C1E43 /* 1-millisecond-of-silence.caf in Resources */,
 				F824377A24CB7A9800BED341 /* Sci-Fi_Spaceship_Message.caf in Resources */,
 				D4AC54502778C82C0097FF10 /* Treatments.strings in Resources */,
+				8C519DF82DFEE0CA00431C31 /* meal.js in Resources */,
+				8C519DF92DFEE0CA00431C31 /* determine-basal.js in Resources */,
+				8C519DFA2DFEE0CA00431C31 /* autotune-core.js in Resources */,
+				8C519DFB2DFEE0CA00431C31 /* autosens.js in Resources */,
+				8C519DFC2DFEE0CA00431C31 /* autotune-prep.js in Resources */,
+				8C519DFD2DFEE0CA00431C31 /* basal-set-temp.js in Resources */,
+				8C519DFE2DFEE0CA00431C31 /* glucose-get-last.js in Resources */,
+				8C519DFF2DFEE0CA00431C31 /* profile.js in Resources */,
+				8C519E002DFEE0CA00431C31 /* iob.js in Resources */,
 				F824377124CB7A9800BED341 /* Indeed.caf in Resources */,
 				F8B3A7CE226CC0B7004BA588 /* shorthigh2.caf in Resources */,
 				F82437D224CB7A9900BED341 /* Remembers_Me_Of_Asia.caf in Resources */,
@@ -4546,6 +4652,12 @@
 				47228B152996BDD2008725DB /* BgReadingsView.swift in Sources */,
 				F8F71D802B7EAA2E005076E8 /* DexcomG7+CoreDataClass.swift in Sources */,
 				47A7DFB62BE4BE4900F1DA5F /* UIView.swift in Sources */,
+				8CB7DDCC2DFEDCB200B83BB5 /* CarbsEntry.swift in Sources */,
+				8CB7DDCD2DFEDCB200B83BB5 /* JSON.swift in Sources */,
+				8CB7DDCE2DFEDCB200B83BB5 /* Suggestion.swift in Sources */,
+				8CB7DDCF2DFEDCB200B83BB5 /* BloodGlucose.swift in Sources */,
+				8CB7DDD02DFEDCB200B83BB5 /* Autosens.swift in Sources */,
+				8CB7DDD12DFEDCB200B83BB5 /* IOBEntry.swift in Sources */,
 				F81FA006228E09D40028C70F /* TextsCalibration.swift in Sources */,
 				F816E0F724367137009EE65B /* GNSEntry+CoreDataClass.swift in Sources */,
 				F8F9721923A5915900C3F17D /* CGMGNSEntryTransmitter.swift in Sources */,
@@ -4701,6 +4813,10 @@
 				F8297F4E238DCAD800D74D66 /* BluetoothPeripheralsViewController.swift in Sources */,
 				F8B3A848227F090E004BA588 /* SettingsViewHealthKitSettingsViewModel.swift in Sources */,
 				8CB7DDBE2DFDCD0200B83BB5 /* MDILoopManager.swift in Sources */,
+				8CB7DDD82DFEDCC900B83BB5 /* Script.swift in Sources */,
+				8CB7DDD92DFEDCC900B83BB5 /* iAPSPredictionManager.swift in Sources */,
+				8CB7DDDA2DFEDCC900B83BB5 /* JavaScriptWorker.swift in Sources */,
+				8CB7DDDB2DFEDCC900B83BB5 /* SyncAccess.swift in Sources */,
 				8CB7DDBF2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift in Sources */,
 				F8025E5021EE746400ECF0C0 /* Calibrator.swift in Sources */,
 				F85DC2F421CFE3D400B9F74A /* Sensor+CoreDataClass.swift in Sources */,

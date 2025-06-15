@@ -64,6 +64,15 @@ fileprivate enum Setting:Int, CaseIterable {
     // carb absorption delay
     case carbAbsorptionDelay = 17
     
+    // show IOB/COB on chart
+    case showIOBCOBOnChart = 18
+    
+    // show IOB trend line
+    case showIOBTrendOnChart = 19
+    
+    // show COB trend line  
+    case showCOBTrendOnChart = 20
+    
 }
 
 /// conforms to SettingsViewModelProtocol for all general settings in the first sections screen
@@ -108,6 +117,21 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
                 self?.sectionReloadClosure?()
             })
             
+        case .showIOBCOBOnChart:
+            return UISwitch(isOn: UserDefaults.standard.showIOBCOBOnChart, action: {(isOn:Bool) in 
+                UserDefaults.standard.showIOBCOBOnChart = isOn
+            })
+            
+        case .showIOBTrendOnChart:
+            return UISwitch(isOn: UserDefaults.standard.showIOBTrendOnChart, action: {(isOn:Bool) in 
+                UserDefaults.standard.showIOBTrendOnChart = isOn
+            })
+            
+        case .showCOBTrendOnChart:
+            return UISwitch(isOn: UserDefaults.standard.showCOBTrendOnChart, action: {(isOn:Bool) in 
+                UserDefaults.standard.showCOBTrendOnChart = isOn
+            })
+            
         case  .screenLockDimmingType, .urgentHighMarkValue, .highMarkValue, .targetMarkValue, .lowMarkValue, .urgentLowMarkValue, .selectPredictionAlgorithm, .insulinSensitivityFactor, .carbRatio, .insulinType, .carbAbsorptionRate, .carbAbsorptionDelay:
             return nil
             
@@ -147,6 +171,9 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
         case .insulinSensitivityFactor, .carbRatio, .insulinType, .carbAbsorptionRate, .carbAbsorptionDelay:
             // Only enabled if predictions are on AND treatments are included
             return UserDefaults.standard.predictionEnabled && UserDefaults.standard.predictionIncludeTreatments
+        case .showIOBTrendOnChart, .showCOBTrendOnChart:
+            // Only enabled if IOB/COB display is enabled
+            return UserDefaults.standard.showIOBCOBOnChart
         default:
             return true
         }
@@ -391,6 +418,35 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
                 cancelHandler: nil,
                 inputValidator: nil
             )
+            
+        case .showIOBCOBOnChart:
+            return SettingsSelectedRowAction.callFunction(function: { [weak self] in
+                if UserDefaults.standard.showIOBCOBOnChart {
+                    UserDefaults.standard.showIOBCOBOnChart = false
+                } else {
+                    UserDefaults.standard.showIOBCOBOnChart = true
+                }
+                // reload section to update enabled states of dependent rows
+                self?.sectionReloadClosure?()
+            })
+            
+        case .showIOBTrendOnChart:
+            return SettingsSelectedRowAction.callFunction(function: {
+                if UserDefaults.standard.showIOBTrendOnChart {
+                    UserDefaults.standard.showIOBTrendOnChart = false
+                } else {
+                    UserDefaults.standard.showIOBTrendOnChart = true
+                }
+            })
+            
+        case .showCOBTrendOnChart:
+            return SettingsSelectedRowAction.callFunction(function: {
+                if UserDefaults.standard.showCOBTrendOnChart {
+                    UserDefaults.standard.showCOBTrendOnChart = false
+                } else {
+                    UserDefaults.standard.showCOBTrendOnChart = true
+                }
+            })
         }
     }
     
@@ -460,6 +516,15 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
             
         case .carbAbsorptionDelay:
             return Texts_SettingsView.carbAbsorptionDelay
+            
+        case .showIOBCOBOnChart:
+            return "Show IOB/COB Values"
+            
+        case .showIOBTrendOnChart:
+            return "Show IOB Trend Line"
+            
+        case .showCOBTrendOnChart:
+            return "Show COB Trend Line"
         }
     }
     
@@ -471,7 +536,7 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
         case .screenLockDimmingType, .urgentHighMarkValue, .highMarkValue, .lowMarkValue, .urgentLowMarkValue, .targetMarkValue, .selectPredictionAlgorithm, .insulinSensitivityFactor, .carbRatio, .insulinType, .carbAbsorptionRate, .carbAbsorptionDelay:
             return UITableViewCell.AccessoryType.disclosureIndicator
             
-        case .allowScreenRotation, .showClockWhenScreenIsLocked, .showMiniChart, .showPredictions, .autoSelectPredictionAlgorithm, .includeTreatmentsInPredictions:
+        case .allowScreenRotation, .showClockWhenScreenIsLocked, .showMiniChart, .showPredictions, .autoSelectPredictionAlgorithm, .includeTreatmentsInPredictions, .showIOBCOBOnChart, .showIOBTrendOnChart, .showCOBTrendOnChart:
             return UITableViewCell.AccessoryType.none
             
         }
@@ -524,7 +589,7 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
         case .carbAbsorptionDelay:
             return Int(UserDefaults.standard.carbAbsorptionDelay).description + " " + Texts_Common.minutes
             
-        case .allowScreenRotation, .showClockWhenScreenIsLocked, .showMiniChart, .showPredictions, .autoSelectPredictionAlgorithm, .includeTreatmentsInPredictions:
+        case .allowScreenRotation, .showClockWhenScreenIsLocked, .showMiniChart, .showPredictions, .autoSelectPredictionAlgorithm, .includeTreatmentsInPredictions, .showIOBCOBOnChart, .showIOBTrendOnChart, .showCOBTrendOnChart:
             return nil
             
         }

@@ -866,6 +866,11 @@ final class RootViewController: UIViewController, ObservableObject {
         // showing or hiding the treatments on the chart
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showTreatmentsOnChart.rawValue, options: .new, context: nil)
         
+        // showing or hiding IOB/COB on the chart
+        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showIOBCOBOnChart.rawValue, options: .new, context: nil)
+        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showIOBTrendOnChart.rawValue, options: .new, context: nil)
+        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showCOBTrendOnChart.rawValue, options: .new, context: nil)
+        
         // predictions need update flag
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.predictionsUpdateNeeded.rawValue, options: .new, context: nil)
         
@@ -1737,6 +1742,10 @@ final class RootViewController: UIViewController, ObservableObject {
         case UserDefaults.Key.showTreatmentsOnChart:
             updateChartWithResetEndDate()
             
+        case UserDefaults.Key.showIOBCOBOnChart, UserDefaults.Key.showIOBTrendOnChart, UserDefaults.Key.showCOBTrendOnChart:
+            updateChartWithResetEndDate()
+            updateIOBCOBOverlay()
+            
         case UserDefaults.Key.showClockWhenScreenIsLocked:
             
             // refresh screenLock function if it is currently activated in order to show/hide the clock as requested
@@ -2526,6 +2535,99 @@ final class RootViewController: UIViewController, ObservableObject {
         
         // update the mini chart
         updateMiniChart()
+        
+        // update IOB/COB overlay if enabled
+        updateIOBCOBOverlay()
+    }
+    
+    /// Updates the IOB/COB overlay on the main chart if enabled
+    private func updateIOBCOBOverlay() {
+        guard UserDefaults.standard.showIOBCOBOnChart else {
+            // Remove any existing overlay if setting is disabled
+            chartOutlet.subviews.forEach { view in
+                if view.tag == 999 {
+                    view.removeFromSuperview()
+                }
+            }
+            return
+        }
+        
+        // Remove any existing overlay
+        chartOutlet.subviews.forEach { view in
+            if view.tag == 999 {
+                view.removeFromSuperview()
+            }
+        }
+        
+        // Create overlay container
+        let overlayView = UIView()
+        overlayView.tag = 999
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+        overlayView.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.9)
+        overlayView.layer.cornerRadius = 8
+        overlayView.layer.borderColor = UIColor.systemGray3.cgColor
+        overlayView.layer.borderWidth = 0.5
+        
+        // Create IOB/COB label
+        let iobCobLabel = UILabel()
+        iobCobLabel.translatesAutoresizingMaskIntoConstraints = false
+        iobCobLabel.font = UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .medium)
+        iobCobLabel.textColor = UIColor.label
+        iobCobLabel.textAlignment = .left
+        
+        // TODO: Calculate actual IOB/COB when calculators are added
+        // For now, show placeholder values
+        let iobValue = 2.5
+        let cobValue = 35.0
+        
+        // Format the display text
+        let attributedString = NSMutableAttributedString()
+        
+        // IOB section
+        attributedString.append(NSAttributedString(string: "IOB: ", attributes: [
+            .font: UIFont.systemFont(ofSize: 12, weight: .regular),
+            .foregroundColor: UIColor.secondaryLabel
+        ]))
+        
+        attributedString.append(NSAttributedString(string: String(format: "%.1fU", iobValue), attributes: [
+            .font: UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .semibold),
+            .foregroundColor: UIColor.systemBlue
+        ]))
+        
+        // Separator
+        attributedString.append(NSAttributedString(string: "  |  "))
+        
+        // COB section
+        attributedString.append(NSAttributedString(string: "COB: ", attributes: [
+            .font: UIFont.systemFont(ofSize: 12, weight: .regular),
+            .foregroundColor: UIColor.secondaryLabel
+        ]))
+        
+        attributedString.append(NSAttributedString(string: String(format: "%.0fg", cobValue), attributes: [
+            .font: UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .semibold),
+            .foregroundColor: UIColor.systemOrange
+        ]))
+        
+        iobCobLabel.attributedText = attributedString
+        
+        // Add label to overlay
+        overlayView.addSubview(iobCobLabel)
+        
+        // Add overlay to chart
+        chartOutlet.addSubview(overlayView)
+        
+        // Set constraints
+        NSLayoutConstraint.activate([
+            // Position overlay in top-left corner with padding
+            overlayView.topAnchor.constraint(equalTo: chartOutlet.topAnchor, constant: 16),
+            overlayView.leadingAnchor.constraint(equalTo: chartOutlet.leadingAnchor, constant: 16),
+            
+            // Label constraints within overlay
+            iobCobLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
+            iobCobLabel.bottomAnchor.constraint(equalTo: overlayView.bottomAnchor, constant: -8),
+            iobCobLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 12),
+            iobCobLabel.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -12)
+        ])
     }
     
     /// if the user has chosen to show the mini-chart, then update it. If not, just return without doing anything.

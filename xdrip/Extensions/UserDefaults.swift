@@ -107,6 +107,15 @@ extension UserDefaults {
         
         /// should the treatments be shown on the main chart?
         case showTreatmentsOnChart = "showTreatmentsOnChart"
+        
+        /// show IOB/COB values on chart
+        case showIOBCOBOnChart = "showIOBCOBOnChart"
+        
+        /// show IOB trend line on chart
+        case showIOBTrendOnChart = "showIOBTrendOnChart"
+        
+        /// show COB trend line on chart
+        case showCOBTrendOnChart = "showCOBTrendOnChart"
         /// micro-bolus threshold level in units
         case smallBolusTreatmentThreshold = "smallBolusTreatmentThreshold"
         /// should the micro-boluses be listed in the treatment list/table?
@@ -1123,6 +1132,36 @@ extension UserDefaults {
         }
         set {
             set(!newValue, forKey: Key.showTreatmentsOnChart.rawValue)
+        }
+    }
+    
+    /// show IOB/COB values on chart
+    @objc dynamic var showIOBCOBOnChart: Bool {
+        get {
+            return bool(forKey: Key.showIOBCOBOnChart.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.showIOBCOBOnChart.rawValue)
+        }
+    }
+    
+    /// show IOB trend line on chart
+    @objc dynamic var showIOBTrendOnChart: Bool {
+        get {
+            return bool(forKey: Key.showIOBTrendOnChart.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.showIOBTrendOnChart.rawValue)
+        }
+    }
+    
+    /// show COB trend line on chart
+    @objc dynamic var showCOBTrendOnChart: Bool {
+        get {
+            return bool(forKey: Key.showCOBTrendOnChart.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.showCOBTrendOnChart.rawValue)
         }
     }
     

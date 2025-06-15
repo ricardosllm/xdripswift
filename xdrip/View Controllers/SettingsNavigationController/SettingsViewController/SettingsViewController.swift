@@ -41,6 +41,9 @@ final class SettingsViewController: UIViewController {
         ///Home Screen settings - urgent high, high, target, low and urgent low values for guidelines
         case homescreen
         
+        /// Chart settings - treatments, IOB/COB display
+        // case chartSettings // Temporarily disabled until file is added to project
+        
         /// statistics settings
         case statistics
         
@@ -102,6 +105,8 @@ final class SettingsViewController: UIViewController {
                 return SettingsViewAppearanceSettingsViewModel()
             case .homescreen:
                 return SettingsViewHomeScreenSettingsViewModel()
+            // case .chartSettings:
+            //     return SettingsViewChartSettingsViewModel()
             case .statistics:
                 return SettingsViewStatisticsSettingsViewModel()
             // case .predictions:
