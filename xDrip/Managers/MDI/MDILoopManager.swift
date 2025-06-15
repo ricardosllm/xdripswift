@@ -114,51 +114,97 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     
     /// Run a single loop cycle to check if recommendations are needed
     func runLoopCycle() {
-        guard isEnabled else { return }
+        do {
+            // Check if enabled
+            guard isEnabled else {
+                throw MDIError.notEnabled
+            }
+            
+            os_log("Running MDI loop cycle", log: log, type: .debug)
+            
+            // Get latest glucose reading
+            guard let bgReadingsAccessor = bgReadingsAccessor else {
+                throw MDIError.missingSettings("bgReadingsAccessor")
+            }
+            
+            guard let latestReading = bgReadingsAccessor.getLatestBgReadings(
+                limit: 1, 
+                fromDate: nil, 
+                forSensor: nil, 
+                ignoreRawData: true, 
+                ignoreCalculatedValue: false
+            ).first else {
+                throw MDIError.noRecentReadings
+            }
+            
+            // Validate glucose value
+            let glucoseValue = latestReading.calculatedValue
+            guard glucoseValue > 0 && glucoseValue < 1000 else {
+                throw MDIError.invalidGlucoseValue(glucoseValue)
+            }
+            
+            // Check data freshness
+            let minutesOld = Int(-latestReading.timeStamp.timeIntervalSinceNow / 60)
+            if minutesOld > 10 {
+                throw MDIError.staleData(minutesOld: minutesOld)
+            }
+            
+            // Check if we can make a recommendation based on time limits
+            guard canMakeRecommendation() else {
+                os_log("Too soon to make another recommendation", log: log, type: .debug)
+                return
+            }
+            
+            // Get recent readings for trend analysis (last 30 minutes)
+            let recentReadings = bgReadingsAccessor.getLatestBgReadings(
+                limit: 10,
+                fromDate: Date().addingTimeInterval(-1800), // 30 minutes
+                forSensor: nil,
+                ignoreRawData: true,
+                ignoreCalculatedValue: false
+            )
+            
+            // Ensure we have enough data for analysis
+            guard recentReadings.count >= 3 else {
+                throw MDIError.insufficientData("Need at least 3 readings for trend analysis")
+            }
+            
+            // Analyze and generate recommendation if needed
+            if let recommendation = analyzeAndGenerateRecommendation(
+                currentReading: latestReading,
+                recentReadings: Array(recentReadings)
+            ) {
+                lastRecommendation = recommendation
+                lastRecommendationTime = Date()
+                
+                os_log("Generated MDI recommendation: %{public}@", log: log, type: .info, recommendation.reason)
+                
+                // Send notification
+                notificationManager.sendNotification(for: recommendation)
+                
+                // Notify delegate
+                delegate?.mdiLoopManager(self, didGenerateRecommendation: recommendation)
+            }
+            
+        } catch let error as MDIError {
+            handleError(error)
+        } catch {
+            handleError(MDIError.unknownError(error.localizedDescription))
+        }
+    }
+    
+    /// Handle MDI errors appropriately
+    private func handleError(_ error: MDIError) {
+        os_log("MDI Loop error: %{public}@", log: log, type: .error, error.localizedDescription)
         
-        os_log("Running MDI loop cycle", log: log, type: .debug)
-        
-        // Get latest glucose reading
-        guard let bgReadingsAccessor = bgReadingsAccessor else {
-            os_log("BgReadingsAccessor not configured", log: log, type: .error)
-            return
+        // Notify delegate of errors that should be shown to user
+        if error.shouldShowToUser {
+            delegate?.mdiLoopManager(self, didEncounterError: error)
         }
         
-        guard let latestReading = bgReadingsAccessor.getLatestBgReadings(limit: 1, fromDate: nil, forSensor: nil, ignoreRawData: true, ignoreCalculatedValue: false).first else {
-            os_log("No glucose reading available", log: log, type: .info)
-            return
-        }
-        
-        // Check if we can make a recommendation based on time limits
-        guard canMakeRecommendation() else {
-            os_log("Too soon to make another recommendation", log: log, type: .debug)
-            return
-        }
-        
-        // Get recent readings for trend analysis (last 30 minutes)
-        let recentReadings = bgReadingsAccessor.getLatestBgReadings(
-            limit: 10,
-            fromDate: Date().addingTimeInterval(-1800), // 30 minutes
-            forSensor: nil,
-            ignoreRawData: true,
-            ignoreCalculatedValue: false
-        )
-        
-        // Analyze and generate recommendation if needed
-        if let recommendation = analyzeAndGenerateRecommendation(
-            currentReading: latestReading,
-            recentReadings: Array(recentReadings)
-        ) {
-            lastRecommendation = recommendation
-            lastRecommendationTime = Date()
-            
-            os_log("Generated MDI recommendation: %{public}@", log: log, type: .info, recommendation.reason)
-            
-            // Send notification
-            notificationManager.sendNotification(for: recommendation)
-            
-            // Notify delegate
-            delegate?.mdiLoopManager(self, didGenerateRecommendation: recommendation)
+        // Stop loop if critical error
+        if error.isCritical {
+            stopLoop()
         }
     }
     
@@ -296,7 +342,6 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
         let currentGlucose = currentReading.calculatedValue
         
         // Get user settings
-        let targetGlucose = UserDefaults.standard.targetMarkValueInUserChosenUnit
         let highThreshold = UserDefaults.standard.highMarkValue
         let urgentHighThreshold = UserDefaults.standard.urgentHighMarkValue
         let lowThreshold = UserDefaults.standard.lowMarkValue

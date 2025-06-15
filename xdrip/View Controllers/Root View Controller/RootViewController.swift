@@ -4403,7 +4403,7 @@ extension RootViewController: MDILoopManagerDelegate {
         // Here we could update UI or log to Core Data in the future
     }
     
-    func mdiLoopManager(_ manager: MDILoopManagerProtocol, didEncounterError error: Error) {
+    func mdiLoopManager(_ manager: MDILoopManagerProtocol, didEncounterError error: MDIError) {
         trace("MDI Loop failed with error: %{public}@", log: self.log, category: ConstantsLog.categoryRootView, type: .error, error.localizedDescription)
         
         // Show alert to user
