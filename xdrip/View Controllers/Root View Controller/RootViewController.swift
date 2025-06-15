@@ -628,7 +628,7 @@ final class RootViewController: UIViewController, ObservableObject {
         updateScreenRotationSettings()
         
         // viewWillAppear when user switches eg from Settings Tab to Home Tab - latest reading value needs to be shown on the view, and also update minutes ago etc.
-        updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.predictionEnabled)
+        updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.showIAPSPredictions)
         
         updatePumpAndAIDStatusViews()
         
@@ -668,7 +668,7 @@ final class RootViewController: UIViewController, ObservableObject {
                 self.updateDataSourceInfo()
             }
             
-            self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.predictionEnabled)
+            self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.showIAPSPredictions)
             
             self.updatePumpAndAIDStatusViews()
         }
@@ -804,7 +804,7 @@ final class RootViewController: UIViewController, ObservableObject {
             self.houseKeeper?.doAppStartUpHouseKeeping()
             
             // update label texts, minutes ago, diff and value
-            self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.predictionEnabled)
+            self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.showIAPSPredictions)
             
             // update the mini-chart
             self.updateMiniChart()
@@ -1049,7 +1049,7 @@ final class RootViewController: UIViewController, ObservableObject {
             // Schedule a call to updateLabelsAndChart when the app comes to the foreground, with a delay of 0.5 seconds. Because the application state is not immediately to .active, as a result, updates may not happen - especially the synctreatments may not happen because this may depend on the application state - by making a call just half a second later, when the status is surely = .active, the UI updates will be done correctly.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 
-                self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.predictionEnabled)
+                self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.showIAPSPredictions)
                 
                 self.updateMiniChart()
                 
@@ -1313,7 +1313,7 @@ final class RootViewController: UIViewController, ObservableObject {
     /// This is called by the regular update timer to ensure predictions are always visible
     @objc private func updateLabelsAndChartWithPredictions() {
         // Always update predictions when called by the timer to prevent them from disappearing
-        updateLabelsAndChart(updatePredictions: UserDefaults.standard.predictionEnabled)
+        updateLabelsAndChart(updatePredictions: UserDefaults.standard.showIAPSPredictions)
     }
     
     /// process new glucose data received from transmitter.
@@ -1630,7 +1630,7 @@ final class RootViewController: UIViewController, ObservableObject {
                 // Reset to current time (Date()) instead of using glucoseChartManager.endDate
                 // This ensures the chart shows the most recent data when time window buttons are tapped
                 // Also update predictions to ensure they are recalculated for the new time window
-                glucoseChartManager.updateChartPoints(endDate: Date(), startDate: Date().addingTimeInterval(.hours(-UserDefaults.standard.chartWidthInHours)), chartOutlet: chartOutlet, completionHandler: nil, updatePredictions: UserDefaults.standard.predictionEnabled)
+                glucoseChartManager.updateChartPoints(endDate: Date(), startDate: Date().addingTimeInterval(.hours(-UserDefaults.standard.chartWidthInHours)), chartOutlet: chartOutlet, completionHandler: nil, updatePredictions: UserDefaults.standard.showIAPSPredictions)
                 
             }
             
@@ -1745,6 +1745,10 @@ final class RootViewController: UIViewController, ObservableObject {
         case UserDefaults.Key.showIOBCOBOnChart, UserDefaults.Key.showIOBTrendOnChart, UserDefaults.Key.showCOBTrendOnChart:
             updateChartWithResetEndDate()
             updateIOBCOBOverlay()
+            
+        case UserDefaults.Key.showIAPSPredictions, UserDefaults.Key.iAPSPredictionHours, UserDefaults.Key.showIOBPrediction, UserDefaults.Key.showCOBPrediction, UserDefaults.Key.showUAMPrediction:
+            // Force update predictions when any iAPS prediction setting changes
+            updateChartWithResetEndDate(updatePredictions: true)
             
         case UserDefaults.Key.showClockWhenScreenIsLocked:
             

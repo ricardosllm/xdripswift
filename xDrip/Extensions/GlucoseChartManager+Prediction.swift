@@ -2,20 +2,21 @@ import Foundation
 import SwiftCharts
 import UIKit
 import os.log
+import CoreData
 
 // MARK: - Prediction Extensions for GlucoseChartManager
 
 extension GlucoseChartManager {
     
-    /// Generates prediction chart points for display on the glucose chart
+    /// Generates prediction chart points for display on the glucose chart using iAPS algorithms
     /// - Parameters:
     ///   - bgReadings: Array of BgReading objects for prediction input
     ///   - endDate: The end date of the chart (latest time displayed)
     /// - Returns: Array of ChartPoint objects representing glucose predictions
     func generatePredictionChartPoints(bgReadings: [BgReading], endDate: Date) -> [ChartPoint] {
         
-        // Check if predictions are enabled in user settings
-        guard UserDefaults.standard.predictionEnabled else {
+        // Check if iAPS predictions are enabled in user settings
+        guard UserDefaults.standard.showIAPSPredictions else {
             return []
         }
         
@@ -33,94 +34,140 @@ extension GlucoseChartManager {
         }
         
         // Log the readings being used for predictions
-        os_log("Generating predictions with %{public}d valid readings", log: .default, type: .info, validReadings.count)
+        os_log("Generating iAPS predictions with %{public}d valid readings", log: .default, type: .info, validReadings.count)
         
-        // Get prediction time horizon based on chart width (1/4 of chart width)
-        let chartWidthHours = UserDefaults.standard.chartWidthInHours
-        let predictionHours = chartWidthHours / 4.0
-        let timeHorizon = TimeInterval(predictionHours * 3600)
+        // Get prediction time horizon from user settings (default 1.5 hours)
+        let predictionHours = UserDefaults.standard.iAPSPredictionHours
         
-        // Create PredictionManager with coreDataManager for IOB/COB calculations
-        let predictionManager = PredictionManager(coreDataManager: coreDataManager)
+        // Get treatment entries for IOB/COB calculations
+        let treatmentEntryAccessor = TreatmentEntryAccessor(coreDataManager: coreDataManager)
+        let endTime = Date()
+        let startTime = endTime.addingTimeInterval(-24 * 3600) // Last 24 hours
+        let treatments = treatmentEntryAccessor.getTreatments(fromDate: startTime, toDate: endTime, on: coreDataManager.mainManagedObjectContext)
         
-        // Generate predictions using PredictionManager
-        // BgReading already conforms to GlucoseReading protocol
-        let predictions = predictionManager.generatePredictions(
-            readings: validReadings,
-            timeHorizon: timeHorizon,
-            intervalMinutes: 5
-        )
+        // Initialize iAPS prediction manager
+        let iAPSManager = iAPSPredictionManager()
         
-        // Convert PredictionPoint objects to ChartPoint objects
-        let chartPoints = predictions.map { prediction in
-            createPredictionChartPoint(from: prediction, endDate: endDate)
+        // Generate predictions using iAPS algorithms
+        guard let predictionResult = iAPSManager.generatePredictions(glucose: validReadings, treatments: treatments) else {
+            os_log("iAPS prediction generation failed", log: .default, type: .error)
+            return []
+        }
+        
+        // Convert iAPS predictions to chart points
+        var chartPoints: [ChartPoint] = []
+        let now = Date()
+        
+        // Create a simple date formatter for the x-axis
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        
+        // Helper function to create chart points from prediction values
+        func createChartPoints(from predictions: [Double], startTime: Date, intervalMinutes: Int) -> [ChartPoint] {
+            var points: [ChartPoint] = []
+            
+            for (index, value) in predictions.enumerated() {
+                let timeStamp = startTime.addingTimeInterval(Double(index * intervalMinutes * 60))
+                // Only include future predictions (beyond current time)
+                if timeStamp > now {
+                    let xValue = ChartAxisValueDate(date: timeStamp, formatter: timeFormatter)
+                    // Convert value to user's preferred unit (predictions are in mg/dL)
+                    let convertedValue = value.mgDlToMmol(mgDl: UserDefaults.standard.bloodGlucoseUnitIsMgDl)
+                    let yValue = ChartAxisValueDouble(convertedValue)
+                    let point = ChartPoint(x: xValue, y: yValue)
+                    points.append(point)
+                    
+                    // Log the first few points for debugging
+                    if points.count <= 3 {
+                        os_log("Creating prediction point #%{public}d: %{public}@ = %.1f mg/dL", log: .default, type: .info, points.count, timeStamp.description, value)
+                    }
+                }
+            }
+            
+            return points
+        }
+        
+        // Use the current time as start time for predictions
+        let predictionStartTime = now
+        
+        // Determine which prediction line(s) to show
+        let showIOB = UserDefaults.standard.showIOBPrediction
+        let showCOB = UserDefaults.standard.showCOBPrediction
+        let showUAM = UserDefaults.standard.showUAMPrediction
+        
+        os_log("Prediction display settings - IOB: %{public}@, COB: %{public}@, UAM: %{public}@", 
+               log: .default, type: .info, 
+               showIOB.description, showCOB.description, showUAM.description)
+        
+        // If no specific lines are selected, show the IOB prediction as default
+        if !showIOB && !showCOB && !showUAM {
+            os_log("No specific predictions selected, showing IOB as default", log: .default, type: .info)
+            let iobPredictions = createChartPoints(
+                from: predictionResult.iob,
+                startTime: predictionStartTime,
+                intervalMinutes: 5
+            )
+            chartPoints.append(contentsOf: iobPredictions)
+            os_log("Added %{public}d IOB prediction points as default", log: .default, type: .info, iobPredictions.count)
+        } else {
+            // Show selected prediction lines
+            if showIOB {
+                let iobPredictions = createChartPoints(
+                    from: predictionResult.iob,
+                    startTime: predictionStartTime,
+                    intervalMinutes: 5
+                )
+                chartPoints.append(contentsOf: iobPredictions)
+            }
+            
+            if showCOB {
+                let cobPredictions = createChartPoints(
+                    from: predictionResult.cob,
+                    startTime: predictionStartTime,
+                    intervalMinutes: 5
+                )
+                chartPoints.append(contentsOf: cobPredictions)
+            }
+            
+            if showUAM {
+                let uamPredictions = createChartPoints(
+                    from: predictionResult.uam,
+                    startTime: predictionStartTime,
+                    intervalMinutes: 5
+                )
+                chartPoints.append(contentsOf: uamPredictions)
+            }
+        }
+        
+        // Filter to only show predictions within the requested time horizon
+        let maxPredictionTime = now.addingTimeInterval(predictionHours * 3600)
+        chartPoints = chartPoints.filter { point in
+            if let xValue = point.x as? ChartAxisValueDate {
+                return xValue.date <= maxPredictionTime
+            }
+            return false
         }
         
         // Log successful prediction generation
         if !chartPoints.isEmpty {
-            os_log("Successfully generated %{public}d prediction points", log: .default, type: .info, chartPoints.count)
-        }
-        
-        return chartPoints
-    }
-    
-    /// Generates prediction chart points from reading data (thread-safe version)
-    /// - Parameters:
-    ///   - readingData: Array of ReadingData structs with timestamp and value
-    ///   - endDate: The end date of the chart (latest time displayed)
-    /// - Returns: Array of ChartPoint objects representing glucose predictions
-    func generatePredictionChartPointsFromData(readingData: [(timestamp: Date, value: Double)], endDate: Date) -> [ChartPoint] {
-        
-        // Check if predictions are enabled in user settings
-        guard UserDefaults.standard.predictionEnabled else {
-            return []
-        }
-        
-        // Filter out any readings with invalid data
-        let validReadings = readingData.filter { reading in
-            // Ensure the reading has valid data
-            return reading.value > 0 &&
-                   reading.value < 1000 && // sanity check for unrealistic values
-                   reading.timestamp.timeIntervalSinceNow < 0 // ensure it's not a future date
-        }
-        
-        guard !validReadings.isEmpty else {
-            os_log("No valid readings found for predictions", log: .default, type: .info)
-            return []
-        }
-        
-        // Log the readings being used for predictions
-        os_log("Generating predictions with %{public}d valid readings", log: .default, type: .info, validReadings.count)
-        
-        // Get prediction time horizon based on chart width (1/4 of chart width)
-        let chartWidthHours = UserDefaults.standard.chartWidthInHours
-        let predictionHours = chartWidthHours / 4.0
-        let timeHorizon = TimeInterval(predictionHours * 3600)
-        
-        // Create GlucoseReading objects from the reading data
-        let glucoseReadings: [GlucoseReading] = validReadings.map { reading in
-            // Create a simple GlucoseReading implementation
-            SimpleGlucoseReading(timeStamp: reading.timestamp, calculatedValue: reading.value)
-        }
-        
-        // Create PredictionManager with coreDataManager for IOB/COB calculations
-        let predictionManager = PredictionManager(coreDataManager: coreDataManager)
-        
-        // Generate predictions using PredictionManager
-        let predictions = predictionManager.generatePredictions(
-            readings: glucoseReadings,
-            timeHorizon: timeHorizon,
-            intervalMinutes: 5
-        )
-        
-        // Convert PredictionPoint objects to ChartPoint objects
-        let chartPoints = predictions.map { prediction in
-            createPredictionChartPoint(from: prediction, endDate: endDate)
-        }
-        
-        // Log successful prediction generation
-        if !chartPoints.isEmpty {
-            os_log("Successfully generated %{public}d prediction points", log: .default, type: .info, chartPoints.count)
+            os_log("Successfully generated %{public}d iAPS prediction points", log: .default, type: .info, chartPoints.count)
+            
+            // Log first and last prediction points for debugging
+            if let firstPoint = chartPoints.first, 
+               let firstX = firstPoint.x as? ChartAxisValueDate,
+               let firstY = firstPoint.y as? ChartAxisValueDouble {
+                let displayValue = firstY.scalar.mgDlToMmol(mgDl: !UserDefaults.standard.bloodGlucoseUnitIsMgDl)
+                os_log("First prediction point: %{public}@ at %.1f (displayed as %.1f)", log: .default, type: .info, firstX.date.description, firstY.scalar, displayValue)
+            }
+            
+            if let lastPoint = chartPoints.last,
+               let lastX = lastPoint.x as? ChartAxisValueDate,
+               let lastY = lastPoint.y as? ChartAxisValueDouble {
+                let displayValue = lastY.scalar.mgDlToMmol(mgDl: !UserDefaults.standard.bloodGlucoseUnitIsMgDl)
+                os_log("Last prediction point: %{public}@ at %.1f (displayed as %.1f)", log: .default, type: .info, lastX.date.description, lastY.scalar, displayValue)
+            }
+        } else {
+            os_log("No iAPS prediction points generated - check if predictions are being filtered out", log: .default, type: .info)
         }
         
         return chartPoints
@@ -138,136 +185,89 @@ extension GlucoseChartManager {
         yAxisLayer: ChartAxisLayer
     ) -> ChartPointsLineLayer<ChartPoint>? {
         
-        guard !predictionChartPoints.isEmpty else { return nil }
-        
-        // Configure prediction line appearance
-        let predictionLineColor = UserDefaults.standard.predictionLineColor
-        let predictionLineWidth = UserDefaults.standard.predictionLineWidth
-        
-        // Create line model with dotted pattern
-        let predictionLineModel = ChartLineModel(
-            chartPoints: predictionChartPoints,
-            lineColor: predictionLineColor,
-            lineWidth: predictionLineWidth,
-            animDuration: 0.3,
-            animDelay: 0.0,
-            dashPattern: [8, 4] // Dotted line pattern: 8px dash, 4px gap
-        )
-        
-        // Create and return the line layer
-        return ChartPointsLineLayer(
-            xAxis: xAxisLayer.axis,
-            yAxis: yAxisLayer.axis,
-            lineModels: [predictionLineModel]
-        )
-    }
-    
-    /// Creates a confidence band layer for prediction uncertainty visualization
-    /// - Parameters:
-    ///   - predictionChartPoints: Array of prediction chart points
-    ///   - xAxisLayer: The chart's x-axis layer
-    ///   - yAxisLayer: The chart's y-axis layer
-    /// - Returns: ChartPointsFillsLayer configured for confidence band display
-    func createPredictionConfidenceLayer(
-        predictionChartPoints: [ChartPoint],
-        xAxisLayer: ChartAxisLayer,
-        yAxisLayer: ChartAxisLayer
-    ) -> ChartPointsFillsLayer? {
-        
-        guard !predictionChartPoints.isEmpty,
-              UserDefaults.standard.showPredictionConfidence else { 
+        guard !predictionChartPoints.isEmpty else { 
+            os_log("createPredictionLineLayer: No prediction points to display", log: .default, type: .info)
             return nil 
         }
         
-        // Create upper and lower confidence bounds
-        let confidenceBandPoints = createConfidenceBandPoints(from: predictionChartPoints)
+        os_log("createPredictionLineLayer: Creating layer with %{public}d points", log: .default, type: .info, predictionChartPoints.count)
         
-        guard !confidenceBandPoints.isEmpty else { return nil }
+        // Configure prediction line appearance based on which predictions are shown
+        let predictionLineWidth = CGFloat(2.0) // Default line width
         
-        // Configure confidence band appearance
-        let confidenceFillColor = UserDefaults.standard.predictionLineColor.withAlphaComponent(0.2)
+        // Determine line colors based on what's being shown
+        var lineModels: [ChartLineModel] = []
         
-        // Create fill layer
-        let confidenceFill = ChartPointsFill(
-            chartPoints: confidenceBandPoints,
-            fillColor: confidenceFillColor,
-            createContainerPoints: false
-        )
-        
-        return ChartPointsFillsLayer(
-            xAxis: xAxisLayer.axis,
-            yAxis: yAxisLayer.axis,
-            fills: [confidenceFill]
-        )
-    }
-    
-    /// Checks for low glucose predictions and returns warning information
-    /// - Parameter bgReadings: Array of recent BgReading objects
-    /// - Returns: Tuple containing time to low and severity, or nil if no low predicted
-    func checkLowGlucosePrediction(bgReadings: [BgReading]) -> (timeToLow: TimeInterval, severity: LowPredictionSeverity)? {
-        
-        guard UserDefaults.standard.lowGlucosePredictionEnabled else {
-            return nil
+        // If showing multiple prediction types, use different colors
+        if UserDefaults.standard.showIOBPrediction ||
+           UserDefaults.standard.showCOBPrediction ||
+           UserDefaults.standard.showUAMPrediction {
+            
+            // For now, use a single color for all predictions
+            // In the future, we could separate the chart points by type
+            let predictionLineModel = ChartLineModel(
+                chartPoints: predictionChartPoints,
+                lineColor: UIColor.systemBlue.withAlphaComponent(0.7),
+                lineWidth: predictionLineWidth,
+                animDuration: 0.3,
+                animDelay: 0.0,
+                dashPattern: [6, 3] // Dashed line pattern: 6px dash, 3px gap
+            )
+            lineModels.append(predictionLineModel)
+            
+        } else {
+            // Single prediction line with default styling
+            let predictionLineModel = ChartLineModel(
+                chartPoints: predictionChartPoints,
+                lineColor: UIColor.systemBlue.withAlphaComponent(0.7),
+                lineWidth: predictionLineWidth,
+                animDuration: 0.3,
+                animDelay: 0.0,
+                dashPattern: [8, 4] // Dotted line pattern: 8px dash, 4px gap
+            )
+            lineModels.append(predictionLineModel)
         }
         
-        let threshold = UserDefaults.standard.lowGlucosePredictionThreshold
-        
-        // Create PredictionManager with coreDataManager for IOB/COB calculations
-        let predictionManager = PredictionManager(coreDataManager: coreDataManager)
-        
-        // BgReading already conforms to GlucoseReading protocol
-        return predictionManager.predictLowGlucose(
-            readings: bgReadings,
-            threshold: threshold,
-            maxHoursAhead: 4.0
+        // Create and return the line layer
+        let lineLayer = ChartPointsLineLayer(
+            xAxis: xAxisLayer.axis,
+            yAxis: yAxisLayer.axis,
+            lineModels: lineModels
         )
-    }
-    
-    // MARK: - Private Helper Methods
-    
-    /// Creates a ChartPoint from a PredictionPoint
-    private func createPredictionChartPoint(from prediction: PredictionPoint, endDate: Date) -> ChartPoint {
-        // Create a simple formatter for the chart - this matches the pattern used elsewhere
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
         
-        let xValue = ChartAxisValueDate(date: prediction.timestamp, formatter: formatter)
+        os_log("createPredictionLineLayer: Successfully created prediction line layer", log: .default, type: .info)
         
-        let glucoseValue = UserDefaults.standard.bloodGlucoseUnitIsMgDl 
-            ? prediction.value 
-            : prediction.value.mgDlToMmol()
-        
-        let yValue = ChartAxisValueDouble(glucoseValue)
-        
-        return ChartPoint(x: xValue, y: yValue)
+        return lineLayer
     }
     
     /// Creates confidence band points for uncertainty visualization
     private func createConfidenceBandPoints(from predictionPoints: [ChartPoint]) -> [ChartPoint] {
+        guard predictionPoints.count >= 2 else { return [] }
+        
         var confidenceBandPoints: [ChartPoint] = []
         
-        // For simplicity, create a band using ±10% of the predicted value
-        // In a more sophisticated implementation, this would use actual confidence intervals
-        let confidencePercentage = 0.1
-        
-        // Create upper bound points
+        // Create upper confidence band (simplified - just add 10% uncertainty)
         for point in predictionPoints {
-            let upperValue = point.y.scalar * (1.0 + confidencePercentage)
-            let upperPoint = ChartPoint(
-                x: point.x,
-                y: ChartAxisValueDouble(upperValue)
-            )
-            confidenceBandPoints.append(upperPoint)
+            if let yValue = point.y as? ChartAxisValueDouble {
+                let upperValue = yValue.scalar * 1.1
+                let upperPoint = ChartPoint(
+                    x: point.x,
+                    y: ChartAxisValueDouble(upperValue)
+                )
+                confidenceBandPoints.append(upperPoint)
+            }
         }
         
-        // Create lower bound points in reverse order to close the polygon
+        // Create lower confidence band (reverse order for proper fill)
         for point in predictionPoints.reversed() {
-            let lowerValue = point.y.scalar * (1.0 - confidencePercentage)
-            let lowerPoint = ChartPoint(
-                x: point.x,
-                y: ChartAxisValueDouble(lowerValue)
-            )
-            confidenceBandPoints.append(lowerPoint)
+            if let yValue = point.y as? ChartAxisValueDouble {
+                let lowerValue = yValue.scalar * 0.9
+                let lowerPoint = ChartPoint(
+                    x: point.x,
+                    y: ChartAxisValueDouble(lowerValue)
+                )
+                confidenceBandPoints.append(lowerPoint)
+            }
         }
         
         return confidenceBandPoints
@@ -278,7 +278,7 @@ extension GlucoseChartManager {
 
 extension UserDefaults {
     
-    /// Whether glucose prediction is enabled
+    /// Whether glucose prediction is enabled (old setting - deprecated)
     var predictionEnabled: Bool {
         get { bool(forKey: "predictionEnabled") }
         set { set(newValue, forKey: "predictionEnabled") }
@@ -337,6 +337,41 @@ extension UserDefaults {
             return value > 0 ? value : 70.0
         }
         set { set(newValue, forKey: "lowGlucosePredictionThreshold") }
+    }
+    
+    // MARK: - iAPS Prediction Settings
+    
+    /// Whether iAPS predictions are enabled
+    var showIAPSPredictions: Bool {
+        get { bool(forKey: "showIAPSPredictions") }
+        set { set(newValue, forKey: "showIAPSPredictions") }
+    }
+    
+    /// iAPS prediction time horizon in hours (default: 1.5 hours = 50% of 3 hour chart)
+    var iAPSPredictionHours: Double {
+        get {
+            let value = double(forKey: "iAPSPredictionHours")
+            return value > 0 ? value : 1.5
+        }
+        set { set(newValue, forKey: "iAPSPredictionHours") }
+    }
+    
+    /// Show IOB-only prediction line
+    var showIOBPrediction: Bool {
+        get { bool(forKey: "showIOBPrediction") }
+        set { set(newValue, forKey: "showIOBPrediction") }
+    }
+    
+    /// Show COB prediction line
+    var showCOBPrediction: Bool {
+        get { bool(forKey: "showCOBPrediction") }
+        set { set(newValue, forKey: "showCOBPrediction") }
+    }
+    
+    /// Show UAM prediction line
+    var showUAMPrediction: Bool {
+        get { bool(forKey: "showUAMPrediction") }
+        set { set(newValue, forKey: "showUAMPrediction") }
     }
 }
 

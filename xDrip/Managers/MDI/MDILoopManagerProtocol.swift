@@ -66,12 +66,27 @@ struct MDIRecommendation {
     }
 }
 
-enum MDIRecommendationType {
+enum MDIRecommendationType: CustomStringConvertible {
     case correctionBolus
     case mealBolus
     case carbsNeeded
     case basalAdjustment
     case combinedBolus // correction + meal
+    
+    var description: String {
+        switch self {
+        case .correctionBolus:
+            return "Correction"
+        case .mealBolus:
+            return "Meal"
+        case .carbsNeeded:
+            return "Carbs"
+        case .basalAdjustment:
+            return "Basal"
+        case .combinedBolus:
+            return "Combined"
+        }
+    }
 }
 
 enum MDIUrgencyLevel: Int, Comparable {

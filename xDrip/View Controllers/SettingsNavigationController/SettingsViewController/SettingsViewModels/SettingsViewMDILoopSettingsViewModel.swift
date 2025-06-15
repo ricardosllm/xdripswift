@@ -38,6 +38,9 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
         
         /// include graph in notification
         case includeGraphInNotification = 6
+        
+        /// basal insulin units per day
+        case basalUnitsPerDay = 7
     }
     
     // MARK: - Protocol Implementation
@@ -94,6 +97,29 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
                     didSelectRowHandler: nil
                 )
                 
+            case .basalUnitsPerDay:
+                return SettingsSelectedRowAction.askText(
+                    title: "Basal Insulin",
+                    message: "Enter your total daily basal insulin dose (e.g., Lantus, Tresiba, Toujeo)",
+                    keyboardType: .decimalPad,
+                    text: String(format: "%.1f", UserDefaults.standard.mdiBasalUnitsPerDay),
+                    placeHolder: "24.0",
+                    actionTitle: nil,
+                    cancelTitle: nil,
+                    actionHandler: { text in
+                        if let units = Double(text), units >= 0 {
+                            UserDefaults.standard.mdiBasalUnitsPerDay = units
+                        }
+                    },
+                    cancelHandler: nil,
+                    inputValidator: { text in
+                        guard let units = Double(text), units >= 0, units <= 200 else {
+                            return "Please enter a valid number between 0 and 200"
+                        }
+                        return nil
+                    }
+                )
+                
             default:
                 return .nothing
             }
@@ -127,6 +153,8 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
                 return "Notification Sound"
             case .includeGraphInNotification:
                 return "Include Graph"
+            case .basalUnitsPerDay:
+                return "Basal Insulin (units/day)"
             }
         }
         return ""
@@ -135,7 +163,7 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
     func accessoryType(index: Int) -> UITableViewCell.AccessoryType {
         if let setting = Setting(rawValue: index) {
             switch setting {
-            case .notificationUrgencyThreshold:
+            case .notificationUrgencyThreshold, .basalUnitsPerDay:
                 return .disclosureIndicator
             default:
                 return .none
@@ -159,6 +187,9 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
                 default:
                     return "High and Urgent"
                 }
+            case .basalUnitsPerDay:
+                let units = UserDefaults.standard.mdiBasalUnitsPerDay
+                return String(format: "%.1f units", units)
             default:
                 return nil
             }

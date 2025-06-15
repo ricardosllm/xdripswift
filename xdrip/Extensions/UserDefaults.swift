@@ -467,6 +467,8 @@ extension UserDefaults {
         /// force StandBy mode to show a big number version of the widget
         case forceStandByBigNumbers = "forceStandByBigNumbers"
         
+        // MARK: - Old Prediction Settings (Deprecated)
+        
         /// enable glucose prediction on the main chart
         case predictionEnabled = "predictionEnabled"
         
@@ -481,6 +483,23 @@ extension UserDefaults {
         
         /// whether to include treatments (IOB/COB) in predictions
         case predictionIncludeTreatments = "predictionIncludeTreatments"
+        
+        // MARK: - iAPS Prediction Settings
+        
+        /// show iAPS predictions on main chart
+        case showIAPSPredictions = "showIAPSPredictions"
+        
+        /// iAPS prediction time horizon in hours
+        case iAPSPredictionHours = "iAPSPredictionHours"
+        
+        /// show IOB-only prediction line
+        case showIOBPrediction = "showIOBPrediction"
+        
+        /// show COB prediction line
+        case showCOBPrediction = "showCOBPrediction"
+        
+        /// show UAM prediction line
+        case showUAMPrediction = "showUAMPrediction"
         
         /// insulin sensitivity factor (ISF) - how much 1 unit drops glucose in mg/dL
         case insulinSensitivityMgDl = "insulinSensitivityMgDl"
@@ -520,6 +539,18 @@ extension UserDefaults {
         /// include graph in notification
         case mdiIncludeGraphInNotification = "mdiIncludeGraphInNotification"
         
+        /// show prediction graph in notifications
+        case mdiShowPredictionGraph = "mdiShowPredictionGraph"
+        
+        /// enable quiet hours for MDI notifications
+        case mdiQuietHoursEnabled = "mdiQuietHoursEnabled"
+        
+        /// quiet hours start (hour of day, 0-23)
+        case mdiQuietHoursStart = "mdiQuietHoursStart"
+        
+        /// quiet hours end (hour of day, 0-23)
+        case mdiQuietHoursEnd = "mdiQuietHoursEnd"
+        
         /// maximum correction bolus allowed
         case mdiMaxCorrectionBolus = "mdiMaxCorrectionBolus"
         
@@ -537,6 +568,9 @@ extension UserDefaults {
         
         /// maximum meal bolus allowed
         case mdiMaxMealBolus = "mdiMaxMealBolus"
+        
+        /// MDI basal insulin units per day (e.g., Lantus, Tresiba)
+        case mdiBasalUnitsPerDay = "mdiBasalUnitsPerDay"
     }
     
     
@@ -1535,6 +1569,63 @@ extension UserDefaults {
         }
         set {
             set(newValue, forKey: Key.mdiMaxMealBolus.rawValue)
+        }
+    }
+    
+    /// show prediction graph in notifications
+    @objc dynamic var mdiShowPredictionGraph: Bool {
+        get {
+            // Default to true for high/critical notifications
+            if object(forKey: Key.mdiShowPredictionGraph.rawValue) == nil {
+                return true
+            }
+            return bool(forKey: Key.mdiShowPredictionGraph.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiShowPredictionGraph.rawValue)
+        }
+    }
+    
+    /// enable quiet hours for MDI notifications
+    @objc dynamic var mdiQuietHoursEnabled: Bool {
+        get {
+            return bool(forKey: Key.mdiQuietHoursEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiQuietHoursEnabled.rawValue)
+        }
+    }
+    
+    /// quiet hours start (hour of day, 0-23)
+    @objc dynamic var mdiQuietHoursStart: Int {
+        get {
+            let value = integer(forKey: Key.mdiQuietHoursStart.rawValue)
+            return value >= 0 ? value : 22 // Default to 10 PM
+        }
+        set {
+            set(max(0, min(23, newValue)), forKey: Key.mdiQuietHoursStart.rawValue)
+        }
+    }
+    
+    /// quiet hours end (hour of day, 0-23)
+    @objc dynamic var mdiQuietHoursEnd: Int {
+        get {
+            let value = integer(forKey: Key.mdiQuietHoursEnd.rawValue)
+            return value >= 0 ? value : 7 // Default to 7 AM
+        }
+        set {
+            set(max(0, min(23, newValue)), forKey: Key.mdiQuietHoursEnd.rawValue)
+        }
+    }
+    
+    /// MDI basal insulin units per day (e.g., Lantus, Tresiba)
+    @objc dynamic var mdiBasalUnitsPerDay: Double {
+        get {
+            let value = double(forKey: Key.mdiBasalUnitsPerDay.rawValue)
+            return value > 0 ? value : 24.0 // Default to 24 units/day
+        }
+        set {
+            set(max(0, newValue), forKey: Key.mdiBasalUnitsPerDay.rawValue)
         }
     }
     

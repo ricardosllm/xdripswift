@@ -1016,16 +1016,21 @@ struct ProfileData {
         let minBg = isMgDl ? minBgUserUnit : minBgUserUnit * 18.0 // Convert mmol/L to mg/dL
         let maxBg = isMgDl ? maxBgUserUnit : maxBgUserUnit * 18.0
         
+        // Calculate basal rate from MDI basal units per day
+        // MDI basal insulin (Lantus, Tresiba, etc.) is evenly distributed over 24 hours
+        let mdiBasalUnitsPerDay = userDefaults.mdiBasalUnitsPerDay
+        let basalRate = mdiBasalUnitsPerDay / 24.0 // Convert to units per hour
+        
         return ProfileData(
             dia: dia,
             carb_ratio: carbRatio,
             sens: isf,
-            max_iob: 0.0, // MDI users don't have pump basal
-            max_daily_basal: 0.0,
-            max_basal_rate: 0.0,
+            max_iob: 0.0, // MDI users don't have pump basal IOB limits
+            max_daily_basal: mdiBasalUnitsPerDay,
+            max_basal_rate: basalRate,
             min_bg: minBg,
             max_bg: maxBg,
-            basal_rate: 0.0
+            basal_rate: basalRate
         )
     }
     
@@ -1051,7 +1056,7 @@ struct ProfileData {
             ],
             "basalprofile": [
                 [
-                    "rate": basal_rate,  // 0 for MDI
+                    "rate": basal_rate,  // MDI basal rate (units/day ÷ 24)
                     "minutes": 0,
                     "i": 0
                 ]
@@ -1073,7 +1078,7 @@ struct ProfileData {
             "useCustomPeakTime": false,
             "basalprofile": [
                 [
-                    "rate": basal_rate,  // 0 for MDI
+                    "rate": basal_rate,  // MDI basal rate (units/day ÷ 24)
                     "minutes": 0,
                     "i": 0
                 ]

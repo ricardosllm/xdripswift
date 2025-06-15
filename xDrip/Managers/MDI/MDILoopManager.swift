@@ -58,6 +58,9 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
         self.bgReadingsAccessor = BgReadingsAccessor(coreDataManager: coreDataManager)
         self.treatmentEntryAccessor = TreatmentEntryAccessor(coreDataManager: coreDataManager)
         self.recommendationEngine = MDIRecommendationEngine(coreDataManager: coreDataManager)
+        
+        // Configure notification manager
+        notificationManager.configure(coreDataManager: coreDataManager)
     }
     
     // MARK: - Public Methods

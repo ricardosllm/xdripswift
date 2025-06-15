@@ -1,6 +1,9 @@
 import Foundation
 import UserNotifications
 import os.log
+import UIKit
+import SwiftCharts
+import SwiftUI
 
 /// Manages notifications for MDI Loop recommendations
 /// Follows Single Responsibility Principle - only handles notification logic
@@ -22,6 +25,14 @@ final class MDINotificationManager: NSObject {
     private let snoozeActionIdentifier = "SNOOZE_MDI"
     private let dismissActionIdentifier = "DISMISS_MDI"
     
+    /// Dependencies
+    private var coreDataManager: CoreDataManager?
+    private var bgReadingsAccessor: BgReadingsAccessor?
+    
+    /// Notification history for preventing duplicates
+    private var notificationHistory: [String: Date] = [:]
+    private let notificationHistoryExpiration: TimeInterval = 3600 // 1 hour
+    
     // MARK: - Initialization
     
     override private init() {
@@ -30,6 +41,12 @@ final class MDINotificationManager: NSObject {
     }
     
     // MARK: - Public Methods
+    
+    /// Configure with core data manager
+    func configure(coreDataManager: CoreDataManager) {
+        self.coreDataManager = coreDataManager
+        self.bgReadingsAccessor = BgReadingsAccessor(coreDataManager: coreDataManager)
+    }
     
     /// Request notification permissions if not already granted
     func requestNotificationPermission(completion: @escaping (Bool) -> Void) {
@@ -51,6 +68,45 @@ final class MDINotificationManager: NSObject {
             return
         }
         
+        // Check quiet hours if enabled
+        if UserDefaults.standard.mdiQuietHoursEnabled {
+            let now = Date()
+            let calendar = Calendar.current
+            let hour = calendar.component(.hour, from: now)
+            
+            let startHour = UserDefaults.standard.mdiQuietHoursStart
+            let endHour = UserDefaults.standard.mdiQuietHoursEnd
+            
+            // Check if current hour is within quiet hours
+            var inQuietHours = false
+            if startHour <= endHour {
+                inQuietHours = hour >= startHour && hour < endHour
+            } else {
+                // Handles cases like 22:00 to 06:00
+                inQuietHours = hour >= startHour || hour < endHour
+            }
+            
+            if inQuietHours && recommendation.urgency != .critical {
+                os_log("Skipping notification during quiet hours", log: self.log, type: .info)
+                return
+            }
+        }
+        
+        // Check for duplicate notifications
+        let notificationKey = "\(recommendation.type)_\(recommendation.urgency)"
+        if let lastSent = notificationHistory[notificationKey] {
+            let timeSinceLastNotification = Date().timeIntervalSince(lastSent)
+            let minimumInterval: TimeInterval = recommendation.urgency == .critical ? 300 : 900 // 5 min for critical, 15 min otherwise
+            
+            if timeSinceLastNotification < minimumInterval {
+                os_log("Skipping duplicate notification (last sent %.0f seconds ago)", log: self.log, type: .info, timeSinceLastNotification)
+                return
+            }
+        }
+        
+        // Clean up old notification history
+        notificationHistory = notificationHistory.filter { Date().timeIntervalSince($0.value) < notificationHistoryExpiration }
+        
         // Create notification content
         let content = createNotificationContent(for: recommendation)
         
@@ -65,11 +121,13 @@ final class MDINotificationManager: NSObject {
         )
         
         // Schedule notification
-        UNUserNotificationCenter.current().add(request) { error in
+        UNUserNotificationCenter.current().add(request) { [weak self] error in
             if let error = error {
-                os_log("Error scheduling MDI notification: %{public}@", log: self.log, type: .error, error.localizedDescription)
+                os_log("Error scheduling MDI notification: %{public}@", log: self?.log ?? .default, type: .error, error.localizedDescription)
             } else {
-                os_log("MDI notification scheduled successfully", log: self.log, type: .info)
+                os_log("MDI notification scheduled successfully", log: self?.log ?? .default, type: .info)
+                // Track notification history
+                self?.notificationHistory[notificationKey] = Date()
             }
         }
     }
@@ -165,6 +223,14 @@ final class MDINotificationManager: NSObject {
             content.subtitle = getPredictionImpactText(for: recommendation)
         }
         
+        // Add chart attachment if enabled and recommendations are high priority
+        if UserDefaults.standard.mdiShowPredictionGraph && 
+           (recommendation.urgency == .critical || recommendation.urgency == .high) {
+            if let attachment = createPredictionChartAttachment(for: recommendation) {
+                content.attachments = [attachment]
+            }
+        }
+        
         return content
     }
     
@@ -234,6 +300,69 @@ final class MDINotificationManager: NSObject {
             return .default
         }
     }
+    
+    /// Create prediction chart attachment for notification
+    private func createPredictionChartAttachment(for recommendation: MDIRecommendation) -> UNNotificationAttachment? {
+        guard let bgReadingsAccessor = bgReadingsAccessor else { return nil }
+        
+        // Get recent BG readings (last 3 hours)
+        let bgReadings = bgReadingsAccessor.getLatestBgReadings(
+            limit: 36, // 3 hours at 5 min intervals
+            fromDate: Date().addingTimeInterval(-3 * 3600),
+            forSensor: nil,
+            ignoreRawData: true,
+            ignoreCalculatedValue: false
+        )
+        
+        guard !bgReadings.isEmpty else { return nil }
+        
+        // Create chart image
+        let chartFrame = CGRect(x: 0, y: 0, width: 350, height: 200)
+        guard let chartImage = createMDIPredictionChart(
+            frame: chartFrame,
+            bgReadings: bgReadings,
+            recommendation: recommendation
+        ) else { return nil }
+        
+        // Save image to temporary file
+        let tempDirectory = FileManager.default.temporaryDirectory
+        let filename = "mdi_prediction_\(recommendation.id.uuidString).png"
+        let fileURL = tempDirectory.appendingPathComponent(filename)
+        
+        guard let data = chartImage.pngData() else { return nil }
+        
+        do {
+            try data.write(to: fileURL)
+            
+            // Create attachment with options
+            let attachment = try UNNotificationAttachment(
+                identifier: "mdi_chart",
+                url: fileURL,
+                options: [
+                    UNNotificationAttachmentOptionsThumbnailHiddenKey: false,
+                    UNNotificationAttachmentOptionsThumbnailClippingRectKey: CGRect(x: 0, y: 0, width: 1, height: 1).dictionaryRepresentation
+                ]
+            )
+            
+            return attachment
+        } catch {
+            os_log("Error creating notification attachment: %{public}@", log: log, type: .error, error.localizedDescription)
+            return nil
+        }
+    }
+    
+    /// Create MDI prediction chart image
+    private func createMDIPredictionChart(frame: CGRect, bgReadings: [BgReading], recommendation: MDIRecommendation) -> UIImage? {
+        // For now, return nil until we can properly integrate chart generation
+        // This would require access to RootViewController's chart generation methods
+        // or creating a simplified chart renderer for notifications
+        return nil
+        
+        // TODO: Future implementation could:
+        // 1. Use SwiftUI GlucoseChartView similar to RootViewController.createNotificationImages()
+        // 2. Create a simplified chart renderer specifically for notifications
+        // 3. Access the existing chart image if available from RootViewController
+    }
 }
 
 // MARK: - UNUserNotificationCenterDelegate
@@ -248,7 +377,11 @@ extension MDINotificationManager: UNUserNotificationCenterDelegate {
         // Check if this is an MDI notification
         if notification.request.content.categoryIdentifier == mdiCategoryIdentifier {
             // Show notification even when app is in foreground
-            completionHandler([.alert, .sound, .badge])
+            if #available(iOS 14.0, *) {
+                completionHandler([.banner, .sound, .badge])
+            } else {
+                completionHandler([.alert, .sound, .badge])
+            }
         } else {
             completionHandler([])
         }
