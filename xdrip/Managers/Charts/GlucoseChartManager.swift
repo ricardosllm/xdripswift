@@ -543,23 +543,8 @@ public class GlucoseChartManager {
                 // get treatments from coredata
                 let treatmentChartPoints: TreatmentChartPointsType = self.getTreatmentChartPoints(startDate: startDateToUse, endDate: endDateToUse, treatmentEntryAccessor: self.data().treatmentEntryAccessor, bgReadingsAccessor: self.data().bgReadingsAccessor, on: self.coreDataManager.privateManagedObjectContext)
                 
-                // assign treatment arrays
-                self.treatmentChartPoints.smallBolus = treatmentChartPoints.smallBolus
-                self.treatmentChartPoints.mediumBolus = treatmentChartPoints.mediumBolus
-                self.treatmentChartPoints.largeBolus = treatmentChartPoints.largeBolus
-                self.treatmentChartPoints.veryLargeBolus = treatmentChartPoints.veryLargeBolus
-                
-                self.treatmentChartPoints.smallCarbs = treatmentChartPoints.smallCarbs
-                self.treatmentChartPoints.mediumCarbs = treatmentChartPoints.mediumCarbs
-                self.treatmentChartPoints.largeCarbs = treatmentChartPoints.largeCarbs
-                self.treatmentChartPoints.veryLargeCarbs = treatmentChartPoints.veryLargeCarbs
-                
-                self.treatmentChartPoints.bgChecks = treatmentChartPoints.bgChecks
-                
-                self.treatmentChartPoints.scheduledBasalRates = treatmentChartPoints.scheduledBasalRates
-                
-                self.treatmentChartPoints.basalRates = treatmentChartPoints.basalRates
-                self.treatmentChartPoints.basalRatesFill = treatmentChartPoints.basalRatesFill
+                // assign treatment arrays - create new tuple since tuples are immutable
+                self.treatmentChartPoints = treatmentChartPoints
                 
             }
             

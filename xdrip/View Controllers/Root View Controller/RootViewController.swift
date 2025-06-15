@@ -4433,3 +4433,60 @@ extension RootViewController {
         }
     }
 }
+
+// MARK: - iAPS Algorithm Testing
+
+extension RootViewController {
+    
+    /// Test iAPS algorithm integration
+    @objc func testIAPSAlgorithms() {
+        trace("Testing iAPS algorithms", log: log, category: ConstantsLog.categoryRootView, type: .info)
+        
+        let iapsManager = iAPSPredictionManager()
+        
+        // Test JavaScript execution first
+        if iapsManager.testJavaScriptExecution() {
+            trace("iAPS JavaScript execution test passed", log: log, category: ConstantsLog.categoryRootView, type: .info)
+            
+            // Get recent glucose readings
+            guard let bgReadingsAccessor = self.bgReadingsAccessor else {
+                trace("bgReadingsAccessor not available", log: log, category: ConstantsLog.categoryRootView, type: .error)
+                return
+            }
+            let bgReadings = bgReadingsAccessor.getLatestBgReadings(limit: 48, fromDate: nil, forSensor: nil, ignoreRawData: false, ignoreCalculatedValue: false) // Last 4 hours of data
+            
+            // Get recent treatments
+            guard let treatmentEntryAccessor = self.treatmentEntryAccessor else {
+                trace("treatmentEntryAccessor not available", log: log, category: ConstantsLog.categoryRootView, type: .error)
+                return
+            }
+            let treatments = treatmentEntryAccessor.getLatestTreatments(limit: 100, fromDate: Date().addingTimeInterval(-24 * 3600)) // Last 24 hours
+            
+            // Generate predictions
+            if let predictions = iapsManager.generatePredictions(glucose: bgReadings, treatments: treatments) {
+                trace("iAPS predictions generated successfully", log: log, category: ConstantsLog.categoryRootView, type: .info)
+                trace("IOB predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.iob.description)
+                trace("COB predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.cob.description)
+                
+                // Show alert with results
+                let message = """
+                IOB Predictions: \(predictions.iob.prefix(5).map { String(format: "%.0f", $0) }.joined(separator: ", "))...
+                COB Predictions: \(predictions.cob.prefix(5).map { String(format: "%.0f", $0) }.joined(separator: ", "))...
+                ZT Predictions: \(predictions.zt.prefix(5).map { String(format: "%.0f", $0) }.joined(separator: ", "))...
+                UAM Predictions: \(predictions.uam.prefix(5).map { String(format: "%.0f", $0) }.joined(separator: ", "))...
+                """
+                
+                let alert = UIAlertController(title: "iAPS Predictions", message: message, actionHandler: nil)
+                self.present(alert, animated: true, completion: nil)
+            } else {
+                trace("Failed to generate iAPS predictions", log: log, category: ConstantsLog.categoryRootView, type: .error)
+                let alert = UIAlertController(title: "iAPS Test Failed", message: "Could not generate predictions", actionHandler: nil)
+                self.present(alert, animated: true, completion: nil)
+            }
+        } else {
+            trace("iAPS JavaScript execution test failed", log: log, category: ConstantsLog.categoryRootView, type: .error)
+            let alert = UIAlertController(title: "iAPS Test Failed", message: "JavaScript engine not working", actionHandler: nil)
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+}
