@@ -43,8 +43,8 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     
     private var coreDataManager: CoreDataManager?
     private var bgReadingsAccessor: BgReadingsAccessor?
-    // TODO: Enable when MDIBolusCalculator is added to project
-    // private var bolusCalculator: MDIBolusCalculator?
+    private var treatmentEntryAccessor: TreatmentEntryAccessor?
+    private var recommendationEngine: MDIRecommendationEngine?
     
     // MARK: - Initialization
     
@@ -56,8 +56,8 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     func configure(coreDataManager: CoreDataManager) {
         self.coreDataManager = coreDataManager
         self.bgReadingsAccessor = BgReadingsAccessor(coreDataManager: coreDataManager)
-        // TODO: Enable when MDIBolusCalculator is added to project
-        // self.bolusCalculator = MDIBolusCalculator(coreDataManager: coreDataManager)
+        self.treatmentEntryAccessor = TreatmentEntryAccessor(coreDataManager: coreDataManager)
+        self.recommendationEngine = MDIRecommendationEngine(coreDataManager: coreDataManager)
     }
     
     // MARK: - Public Methods
@@ -178,6 +178,113 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     
     /// Analyze readings and generate recommendation if needed
     private func analyzeAndGenerateRecommendation(
+        currentReading: BgReading,
+        recentReadings: [BgReading]
+    ) -> MDIRecommendation? {
+        
+        guard let recommendationEngine = recommendationEngine,
+              let treatmentEntryAccessor = treatmentEntryAccessor else {
+            os_log("Recommendation engine or treatment accessor not configured", log: log, type: .error)
+            return nil
+        }
+        
+        // Get recent treatments for IOB/COB calculation
+        let treatments = treatmentEntryAccessor.getLatestTreatments(
+            limit: 100,
+            fromDate: Date().addingTimeInterval(-24 * 3600) // Last 24 hours
+        )
+        
+        // Get more BG readings for better predictions (last 4 hours)
+        let extendedReadings = bgReadingsAccessor?.getLatestBgReadings(
+            limit: 48,
+            fromDate: Date().addingTimeInterval(-4 * 3600),
+            forSensor: nil,
+            ignoreRawData: false,
+            ignoreCalculatedValue: false
+        ) ?? recentReadings
+        
+        // Generate recommendation using the engine
+        guard let engineRecommendation = recommendationEngine.generateRecommendation(
+            bgReadings: extendedReadings,
+            treatments: treatments,
+            pendingCarbs: nil as Double? // TODO: Add pending carbs from UI when available
+        ) else {
+            os_log("Recommendation engine did not generate a recommendation", log: log, type: .debug)
+            return nil
+        }
+        
+        // Convert engine recommendation to MDIRecommendation
+        let (title, _) = engineRecommendation.formatForNotification()
+        
+        // Map urgency
+        let urgency: MDIUrgencyLevel
+        switch engineRecommendation.urgency {
+        case .urgent:
+            urgency = .high
+        case .normal:
+            urgency = .medium
+        case .optional:
+            urgency = .low
+        }
+        
+        // Map recommendation type
+        let recommendationType: MDIRecommendationType
+        let dose: Double?
+        let carbs: Int?
+        
+        switch engineRecommendation.type {
+        case .correction:
+            recommendationType = .correctionBolus
+            dose = getRecommendedUnits(from: engineRecommendation.type)
+            carbs = nil
+        case .meal(_, let mealCarbs, _):
+            recommendationType = .mealBolus
+            dose = getRecommendedUnits(from: engineRecommendation.type)
+            carbs = Int(mealCarbs)
+        case .both:
+            recommendationType = .combinedBolus
+            dose = getRecommendedUnits(from: engineRecommendation.type)
+            if case .both(_, _, let mealCarbs, _) = engineRecommendation.type {
+                carbs = Int(mealCarbs)
+            } else {
+                carbs = nil
+            }
+        case .none:
+            // No recommendation needed
+            return nil
+        }
+        
+        // Create MDI recommendation
+        let recommendation = MDIRecommendation(
+            id: engineRecommendation.id,
+            timestamp: engineRecommendation.timestamp,
+            type: recommendationType,
+            dose: dose,
+            carbs: carbs,
+            reason: title,
+            urgency: urgency,
+            expiresAt: engineRecommendation.expires
+        )
+        
+        return recommendation
+    }
+    
+    /// Extract recommended units from recommendation type
+    private func getRecommendedUnits(from type: MDIRecommendationEngine.RecommendationType) -> Double {
+        switch type {
+        case .correction(let units, _):
+            return units
+        case .meal(let units, _, _):
+            return units
+        case .both(let correctionUnits, let mealUnits, _, _):
+            return correctionUnits + mealUnits
+        case .none(_):
+            return 0
+        }
+    }
+    
+    /// ORIGINAL METHOD - Keeping for reference but not using
+    private func analyzeAndGenerateRecommendation_OLD(
         currentReading: BgReading,
         recentReadings: [BgReading]
     ) -> MDIRecommendation? {

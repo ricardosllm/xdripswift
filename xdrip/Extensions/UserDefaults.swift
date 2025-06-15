@@ -519,6 +519,24 @@ extension UserDefaults {
         
         /// include graph in notification
         case mdiIncludeGraphInNotification = "mdiIncludeGraphInNotification"
+        
+        /// maximum correction bolus allowed
+        case mdiMaxCorrectionBolus = "mdiMaxCorrectionBolus"
+        
+        /// minimum time between corrections in minutes
+        case mdiMinTimeBetweenCorrections = "mdiMinTimeBetweenCorrections"
+        
+        /// minimum BG for correction
+        case mdiMinBGForCorrection = "mdiMinBGForCorrection"
+        
+        /// maximum BG for no action
+        case mdiMaxBGForNoAction = "mdiMaxBGForNoAction"
+        
+        /// maximum IOB multiplier
+        case mdiMaxIOBMultiplier = "mdiMaxIOBMultiplier"
+        
+        /// maximum meal bolus allowed
+        case mdiMaxMealBolus = "mdiMaxMealBolus"
     }
     
     
@@ -1445,6 +1463,78 @@ extension UserDefaults {
         }
         set {
             set(newValue, forKey: Key.mdiIncludeGraphInNotification.rawValue)
+        }
+    }
+    
+    /// Maximum correction bolus allowed (safety limit)
+    @objc dynamic var mdiMaxCorrectionBolus: Double {
+        get {
+            // Default to 5 units if not set
+            let value = double(forKey: Key.mdiMaxCorrectionBolus.rawValue)
+            return value > 0 ? value : 5.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMaxCorrectionBolus.rawValue)
+        }
+    }
+    
+    /// Minimum time between correction boluses in minutes
+    @objc dynamic var mdiMinTimeBetweenCorrections: Int {
+        get {
+            // Default to 60 minutes if not set
+            let value = integer(forKey: Key.mdiMinTimeBetweenCorrections.rawValue)
+            return value > 0 ? value : 60
+        }
+        set {
+            set(newValue, forKey: Key.mdiMinTimeBetweenCorrections.rawValue)
+        }
+    }
+    
+    /// Minimum BG value to allow correction bolus
+    @objc dynamic var mdiMinBGForCorrection: Double {
+        get {
+            // Default to 120 mg/dL if not set
+            let value = double(forKey: Key.mdiMinBGForCorrection.rawValue)
+            return value > 0 ? value : 120.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMinBGForCorrection.rawValue)
+        }
+    }
+    
+    /// Maximum BG before requiring action
+    @objc dynamic var mdiMaxBGForNoAction: Double {
+        get {
+            // Default to 180 mg/dL if not set
+            let value = double(forKey: Key.mdiMaxBGForNoAction.rawValue)
+            return value > 0 ? value : 180.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMaxBGForNoAction.rawValue)
+        }
+    }
+    
+    /// Maximum IOB as multiple of ISF
+    @objc dynamic var mdiMaxIOBMultiplier: Double {
+        get {
+            // Default to 2.0x ISF if not set
+            let value = double(forKey: Key.mdiMaxIOBMultiplier.rawValue)
+            return value > 0 ? value : 2.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMaxIOBMultiplier.rawValue)
+        }
+    }
+    
+    /// Maximum meal bolus allowed (safety limit)
+    @objc dynamic var mdiMaxMealBolus: Double {
+        get {
+            // Default to 10 units if not set
+            let value = double(forKey: Key.mdiMaxMealBolus.rawValue)
+            return value > 0 ? value : 10.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMaxMealBolus.rawValue)
         }
     }
     

@@ -281,6 +281,7 @@
 		8CB7DDBF2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */; };
 		8CB7DDC12DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC02DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift */; };
 		8CB7DDC32DFDD2B600B83BB5 /* MDINotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC22DFDD2B600B83BB5 /* MDINotificationManager.swift */; };
+		38A2A46F531842188E32AD12 /* MDIRecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A2A46E531842188E32AD12 /* MDIRecommendationEngine.swift */; };
 		8CB7DDCC2DFEDCB200B83BB5 /* CarbsEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC62DFEDCB200B83BB5 /* CarbsEntry.swift */; };
 		8CB7DDCD2DFEDCB200B83BB5 /* JSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC82DFEDCB200B83BB5 /* JSON.swift */; };
 		8CB7DDCE2DFEDCB200B83BB5 /* Suggestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB7DDC92DFEDCB200B83BB5 /* Suggestion.swift */; };
@@ -1158,6 +1159,7 @@
 		8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDILoopManagerProtocol.swift; sourceTree = "<group>"; };
 		8CB7DDC02DFDCD2000B83BB5 /* SettingsViewMDILoopSettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewMDILoopSettingsViewModel.swift; sourceTree = "<group>"; };
 		8CB7DDC22DFDD2B600B83BB5 /* MDINotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDINotificationManager.swift; sourceTree = "<group>"; };
+		38A2A46E531842188E32AD12 /* MDIRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDIRecommendationEngine.swift; sourceTree = "<group>"; };
 		8CB7DDC42DFEDCB200B83BB5 /* Autosens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Autosens.swift; sourceTree = "<group>"; };
 		8CB7DDC52DFEDCB200B83BB5 /* BloodGlucose.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodGlucose.swift; sourceTree = "<group>"; };
 		8CB7DDC62DFEDCB200B83BB5 /* CarbsEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbsEntry.swift; sourceTree = "<group>"; };
@@ -2372,6 +2374,7 @@
 				8CB7DDC22DFDD2B600B83BB5 /* MDINotificationManager.swift */,
 				8CB7DDBB2DFDCD0200B83BB5 /* MDILoopManager.swift */,
 				8CB7DDBC2DFDCD0200B83BB5 /* MDILoopManagerProtocol.swift */,
+				38A2A46E531842188E32AD12 /* MDIRecommendationEngine.swift */,
 			);
 			path = MDI;
 			sourceTree = "<group>";
@@ -4671,6 +4674,7 @@
 				F8F9722E23A5915900C3F17D /* M5StackTransmitterOpCode.swift in Sources */,
 				8C1E7CA42DF88C81003BFF4B /* InsulinProfile.swift in Sources */,
 				8CB7DDC32DFDD2B600B83BB5 /* MDINotificationManager.swift in Sources */,
+				38A2A46F531842188E32AD12 /* MDIRecommendationEngine.swift in Sources */,
 				8C1E7CA52DF88C81003BFF4B /* COBCalculator.swift in Sources */,
 				8C1E7CA62DF88C81003BFF4B /* IOBCalculator.swift in Sources */,
 				47D9BC952A78498500AB85B2 /* BgReadingsDetailView.swift in Sources */,
