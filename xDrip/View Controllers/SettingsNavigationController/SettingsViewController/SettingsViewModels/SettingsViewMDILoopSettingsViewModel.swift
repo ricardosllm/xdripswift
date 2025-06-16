@@ -1,6 +1,8 @@
 import UIKit
 import os
 
+// Notification names removed - using simple info text instead to prevent crashes
+
 /// Settings view model for MDI Loop Emulation settings
 class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
     
@@ -41,6 +43,12 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
         
         /// basal insulin units per day
         case basalUnitsPerDay = 7
+        
+        /// view recommendation history
+        case viewHistory = 8
+        
+        /// help and documentation
+        case help = 9
     }
     
     // MARK: - Protocol Implementation
@@ -120,6 +128,20 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
                     }
                 )
                 
+            case .viewHistory:
+                // Temporarily disable this feature to prevent crashes
+                return .showInfoText(
+                    title: "Coming Soon", 
+                    message: "The recommendation history feature is currently being improved and will be available in a future update."
+                )
+                
+            case .help:
+                // Show simple help text instead of navigating to prevent crashes
+                return .showInfoText(
+                    title: "MDI Loop Help",
+                    message: "MDI Loop provides insulin dosing recommendations for Multiple Daily Injection users.\n\nWhen enabled, it analyzes your glucose trends and suggests corrections based on your settings.\n\nNotifications will appear when action may be needed. You can accept, snooze, or dismiss each recommendation.\n\nAlways verify recommendations with your clinical judgment."
+                )
+                
             default:
                 return .nothing
             }
@@ -155,6 +177,10 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
                 return "Include Graph"
             case .basalUnitsPerDay:
                 return "Basal Insulin (units/day)"
+            case .viewHistory:
+                return "View History"
+            case .help:
+                return "Help"
             }
         }
         return ""
@@ -163,7 +189,7 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
     func accessoryType(index: Int) -> UITableViewCell.AccessoryType {
         if let setting = Setting(rawValue: index) {
             switch setting {
-            case .notificationUrgencyThreshold, .basalUnitsPerDay:
+            case .notificationUrgencyThreshold, .basalUnitsPerDay, .viewHistory, .help:
                 return .disclosureIndicator
             default:
                 return .none

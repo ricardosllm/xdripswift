@@ -1,5 +1,6 @@
 import Foundation
 import os.log
+import CoreData
 
 /// Main implementation of MDI Loop Manager
 /// Follows Single Responsibility Principle - manages the loop cycle only
@@ -46,6 +47,10 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     private var treatmentEntryAccessor: TreatmentEntryAccessor?
     private var recommendationEngine: MDIRecommendationEngine?
     
+    // Type aliases to work around module issues
+    private typealias EngineRecommendation = MDIRecommendationEngine.Recommendation
+    private typealias EngineUrgency = MDIRecommendationEngine.RecommendationUrgency
+    
     // MARK: - Initialization
     
     override private init() {
@@ -61,6 +66,7 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
         
         // Configure notification manager
         notificationManager.configure(coreDataManager: coreDataManager)
+        notificationManager.setLoopManager(self)
     }
     
     // MARK: - Public Methods
@@ -100,6 +106,9 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
         
         os_log("MDI Loop started", log: log, type: .info)
         delegate?.mdiLoopManager(self, didChangeStatus: true)
+        
+        // Track analytics
+        MDIAnalytics.shared.track(.loopEnabled)
     }
     
     /// Stop the MDI loop monitoring
@@ -110,6 +119,9 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
         
         os_log("MDI Loop stopped", log: log, type: .info)
         delegate?.mdiLoopManager(self, didChangeStatus: false)
+        
+        // Track analytics
+        MDIAnalytics.shared.track(.loopDisabled)
     }
     
     /// Run a single loop cycle to check if recommendations are needed
@@ -121,6 +133,9 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
             }
             
             os_log("Running MDI loop cycle", log: log, type: .debug)
+            
+            // Track analytics
+            MDIAnalytics.shared.track(.loopCycleRun)
             
             // Get latest glucose reading
             guard let bgReadingsAccessor = bgReadingsAccessor else {
@@ -179,11 +194,20 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
                 
                 os_log("Generated MDI recommendation: %{public}@", log: log, type: .info, recommendation.reason)
                 
+                // Save to Core Data
+                saveRecommendationToHistory(recommendation, currentReading: latestReading)
+                
                 // Send notification
                 notificationManager.sendNotification(for: recommendation)
                 
                 // Notify delegate
                 delegate?.mdiLoopManager(self, didGenerateRecommendation: recommendation)
+                
+                // Track analytics
+                MDIAnalytics.shared.track(.recommendationGenerated, parameters: [
+                    "type": recommendation.type.description,
+                    "urgency": recommendation.urgency.rawValue
+                ])
             }
             
         } catch let error as MDIError {
@@ -224,6 +248,93 @@ final class MDILoopManager: NSObject, MDILoopManagerProtocol {
     }
     
     // MARK: - Private Methods
+    
+    /// Save recommendation to Core Data history
+    private func saveRecommendationToHistory(_ recommendation: MDIRecommendation, currentReading: BgReading) {
+        guard let coreDataManager = coreDataManager else { return }
+        
+        coreDataManager.mainManagedObjectContext.performAndWait {
+            let history = MDIRecommendationHistory(
+                recommendation: recommendation,
+                context: coreDataManager.mainManagedObjectContext
+            )
+            
+            // Add context data
+            history.glucoseAtTime = currentReading.calculatedValue
+            
+            // Get current IOB/COB if available
+            if let recommendationEngine = recommendationEngine,
+               let treatmentEntryAccessor = treatmentEntryAccessor {
+                let treatments = treatmentEntryAccessor.getLatestTreatments(
+                    limit: 100,
+                    fromDate: Date().addingTimeInterval(-24 * 3600)
+                )
+                
+                // Simple IOB calculation (should use proper calculation)
+                let iob = treatments
+                    .filter { $0.treatmentType == .Insulin && $0.date > Date().addingTimeInterval(-4 * 3600) }
+                    .reduce(0.0) { $0 + $1.value }
+                
+                // Simple COB calculation
+                let cob = treatments
+                    .filter { $0.treatmentType == .Carbs && $0.date > Date().addingTimeInterval(-3 * 3600) }
+                    .reduce(0.0) { $0 + $1.value }
+                
+                history.iobAtTime = iob
+                history.cobAtTime = cob
+            }
+            
+            // Add trend arrow
+            if currentReading.calculatedValueSlope > 3 {
+                history.trendArrow = "↑↑"
+            } else if currentReading.calculatedValueSlope > 1 {
+                history.trendArrow = "↑"
+            } else if currentReading.calculatedValueSlope > -1 {
+                history.trendArrow = "→"
+            } else if currentReading.calculatedValueSlope > -3 {
+                history.trendArrow = "↓"
+            } else {
+                history.trendArrow = "↓↓"
+            }
+            
+            // Save
+            do {
+                try coreDataManager.mainManagedObjectContext.save()
+                os_log("Saved recommendation to history", log: log, type: .info)
+            } catch {
+                os_log("Failed to save recommendation history: %{public}@", log: log, type: .error, error.localizedDescription)
+            }
+        }
+    }
+    
+    /// Update recommendation status when user takes action
+    func updateRecommendationStatus(_ recommendationId: UUID, status: RecommendationStatus, actualDose: Double? = nil, actualCarbs: Double? = nil) {
+        guard let coreDataManager = coreDataManager else { return }
+        
+        coreDataManager.mainManagedObjectContext.performAndWait {
+            let request: NSFetchRequest<MDIRecommendationHistory> = MDIRecommendationHistory.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", recommendationId as CVarArg)
+            request.fetchLimit = 1
+            
+            do {
+                if let history = try coreDataManager.mainManagedObjectContext.fetch(request).first {
+                    history.updateStatus(status)
+                    
+                    if let dose = actualDose {
+                        history.actualDoseTaken = dose
+                    }
+                    if let carbs = actualCarbs {
+                        history.actualCarbsTaken = carbs
+                    }
+                    
+                    try coreDataManager.mainManagedObjectContext.save()
+                    os_log("Updated recommendation status to %{public}@", log: log, type: .info, status.rawValue)
+                }
+            } catch {
+                os_log("Failed to update recommendation status: %{public}@", log: log, type: .error, error.localizedDescription)
+            }
+        }
+    }
     
     /// Analyze readings and generate recommendation if needed
     private func analyzeAndGenerateRecommendation(

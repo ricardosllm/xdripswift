@@ -794,6 +794,8 @@ final class RootViewController: UIViewController, ObservableObject {
         // nillify the active sensor start date on start-up
         UserDefaults.standard.activeSensorStartDate = nil
         
+        // MDI navigation observers removed - using simple info text instead to prevent crashes
+        
         // Setup Core Data Manager - setting up coreDataManager happens asynchronously
         // completion handler is called when finished. This gives the app time to already continue setup which is independent of coredata, like initializing the views
         coreDataManager = CoreDataManager(modelName: ConstantsCoreData.modelName, completion: {
@@ -4436,6 +4438,38 @@ extension RootViewController {
             mdiLoopManager.stopLoop()
         }
     }
+    
+    /* Commented out - these navigation methods were causing crashes
+    /// Show MDI History view controller
+    @objc func showMDIHistory() {
+        trace("showMDIHistory called", log: self.log, category: ConstantsLog.categoryRootView, type: .info)
+        
+        guard let coreDataManager = coreDataManager else { 
+            trace("coreDataManager is nil", log: self.log, category: ConstantsLog.categoryRootView, type: .error)
+            return 
+        }
+        
+        let historyVC = MDIHistoryViewController()
+        historyVC.configure(coreDataManager: coreDataManager)
+        
+        // Check if we're currently showing settings - if so, use the presented navigation controller
+        if let presentedNav = self.presentedViewController as? UINavigationController {
+            trace("Using presented navigation controller", log: self.log, category: ConstantsLog.categoryRootView, type: .info)
+            presentedNav.pushViewController(historyVC, animated: true)
+        } else if let nav = navigationController {
+            trace("Using root navigation controller", log: self.log, category: ConstantsLog.categoryRootView, type: .info)
+            nav.pushViewController(historyVC, animated: true)
+        } else {
+            trace("No navigation controller found", log: self.log, category: ConstantsLog.categoryRootView, type: .error)
+        }
+    }
+    
+    /// Show MDI Help view controller
+    @objc func showMDIHelp() {
+        let helpVC = MDIHelpViewController()
+        navigationController?.pushViewController(helpVC, animated: true)
+    }
+    */
 }
 
 // MARK: - iAPS Algorithm Testing

@@ -12,6 +12,15 @@ class iAPSPredictionManager {
     private let log = OSLog(subsystem: ConstantsLog.subSystem, category: ConstantsLog.categoryRootView)
     private var debugLogs: [String] = []
     
+    // MARK: - Nested Types
+    
+    struct PredictionResult {
+        let iob: [Double]  // IOB prediction values
+        let cob: [Double]  // COB prediction values
+        let zt: [Double]   // Zero-temp predictions
+        let uam: [Double]  // Unannounced meal predictions
+    }
+    
     init() {
         trace("iAPSPredictionManager initialized", log: log, category: ConstantsLog.categoryRootView, type: .info)
         debugLogs.removeAll()
@@ -810,13 +819,7 @@ class iAPSPredictionManager {
         ]
     }
     */
-}
-
-struct PredictionResult {
-    let iob: [Double]  // IOB prediction values
-    let cob: [Double]  // COB prediction values
-    let zt: [Double]   // Zero-temp predictions
-    let uam: [Double]  // Unannounced meal predictions
+    
 }
 
 // MARK: - Data Converters

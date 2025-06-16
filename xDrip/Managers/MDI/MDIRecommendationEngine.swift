@@ -49,19 +49,57 @@ public class MDIRecommendationEngine {
     
     /// Recommendation result
     public struct Recommendation {
-        let id: UUID
-        let timestamp: Date
-        let type: RecommendationType
-        let urgency: RecommendationUrgency
-        let currentBG: Double
-        let predictedBG: Double
-        let iob: Double
-        let cob: Double
-        let safetyChecks: [SafetyCheck]
-        let expires: Date
+        public let id: UUID
+        public let timestamp: Date
+        public let type: RecommendationType
+        public let urgency: RecommendationUrgency
+        public let currentBG: Double
+        public let predictedBG: Double
+        public let iob: Double
+        public let cob: Double
+        public let safetyChecks: [SafetyCheck]
+        public let expires: Date
         
-        var isValid: Bool {
+        public var isValid: Bool {
             return expires > Date() && safetyChecks.allSatisfy { $0.passed }
+        }
+        
+        /// Format recommendation for notification
+        public func formatForNotification() -> (title: String, body: String) {
+            let formatter = NumberFormatter()
+            formatter.maximumFractionDigits = 1
+            
+            var title = ""
+            var body = ""
+            
+            switch type {
+            case .correction(let units, _):
+                title = "Correction Recommended: \(formatter.string(from: NSNumber(value: units)) ?? "0")u"
+                body = "Current BG: \(Int(currentBG)) → Predicted: \(Int(predictedBG))"
+                
+            case .meal(let units, let carbs, _):
+                title = "Meal Bolus: \(formatter.string(from: NSNumber(value: units)) ?? "0")u"
+                body = "For \(Int(carbs))g carbs. Current BG: \(Int(currentBG))"
+                
+            case .both(let correction, let meal, let carbs, _):
+                let total = correction + meal
+                title = "Total Bolus: \(formatter.string(from: NSNumber(value: total)) ?? "0")u"
+                body = "\(formatter.string(from: NSNumber(value: meal)) ?? "0")u meal (\(Int(carbs))g) + \(formatter.string(from: NSNumber(value: correction)) ?? "0")u correction"
+                
+            case .none(let reason):
+                title = "No Action Needed"
+                body = reason
+            }
+            
+            // Add IOB/COB info if relevant
+            if iob > 0.1 || cob > 0.1 {
+                body += "\nIOB: \(formatter.string(from: NSNumber(value: iob)) ?? "0")u"
+                if cob > 0.1 {
+                    body += ", COB: \(Int(cob))g"
+                }
+            }
+            
+            return (title, body)
         }
     }
     
@@ -242,7 +280,7 @@ public class MDIRecommendationEngine {
     }
     
     /// Get predicted BG at specified minutes in future
-    private func getPredictedBG(predictions: PredictionResult, minutes: Int) -> Double {
+    private func getPredictedBG(predictions: iAPSPredictionManager.PredictionResult, minutes: Int) -> Double {
         let index = minutes / 5 // Predictions are in 5-minute intervals
         
         // Use IOB prediction if available, otherwise ZT
@@ -385,42 +423,3 @@ extension MDIRecommendationEngine.RecommendationType: CustomStringConvertible {
     }
 }
 
-extension MDIRecommendationEngine.Recommendation {
-    /// Format recommendation for notification
-    public func formatForNotification() -> (title: String, body: String) {
-        let formatter = NumberFormatter()
-        formatter.maximumFractionDigits = 1
-        
-        var title = ""
-        var body = ""
-        
-        switch type {
-        case .correction(let units, _):
-            title = "Correction Recommended: \(formatter.string(from: NSNumber(value: units)) ?? "0")u"
-            body = "Current BG: \(Int(currentBG)) → Predicted: \(Int(predictedBG))"
-            
-        case .meal(let units, let carbs, _):
-            title = "Meal Bolus: \(formatter.string(from: NSNumber(value: units)) ?? "0")u"
-            body = "For \(Int(carbs))g carbs. Current BG: \(Int(currentBG))"
-            
-        case .both(let correction, let meal, let carbs, _):
-            let total = correction + meal
-            title = "Total Bolus: \(formatter.string(from: NSNumber(value: total)) ?? "0")u"
-            body = "\(formatter.string(from: NSNumber(value: meal)) ?? "0")u meal (\(Int(carbs))g) + \(formatter.string(from: NSNumber(value: correction)) ?? "0")u correction"
-            
-        case .none(let reason):
-            title = "No Action Needed"
-            body = reason
-        }
-        
-        // Add IOB/COB info if relevant
-        if iob > 0.1 || cob > 0.1 {
-            body += "\nIOB: \(formatter.string(from: NSNumber(value: iob)) ?? "0")u"
-            if cob > 0.1 {
-                body += ", COB: \(Int(cob))g"
-            }
-        }
-        
-        return (title, body)
-    }
-}

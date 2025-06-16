@@ -375,10 +375,3 @@ extension UserDefaults {
     }
 }
 
-// MARK: - Simple GlucoseReading Implementation for Thread Safety
-
-/// A simple implementation of GlucoseReading protocol that doesn't depend on Core Data
-private struct SimpleGlucoseReading: GlucoseReading {
-    let timeStamp: Date
-    let calculatedValue: Double
-}

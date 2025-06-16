@@ -28,6 +28,7 @@ final class MDINotificationManager: NSObject {
     /// Dependencies
     private var coreDataManager: CoreDataManager?
     private var bgReadingsAccessor: BgReadingsAccessor?
+    private weak var loopManager: MDILoopManager?
     
     /// Notification history for preventing duplicates
     private var notificationHistory: [String: Date] = [:]
@@ -46,6 +47,11 @@ final class MDINotificationManager: NSObject {
     func configure(coreDataManager: CoreDataManager) {
         self.coreDataManager = coreDataManager
         self.bgReadingsAccessor = BgReadingsAccessor(coreDataManager: coreDataManager)
+    }
+    
+    /// Set the loop manager reference for updating recommendation status
+    func setLoopManager(_ loopManager: MDILoopManager) {
+        self.loopManager = loopManager
     }
     
     /// Request notification permissions if not already granted
@@ -128,6 +134,9 @@ final class MDINotificationManager: NSObject {
                 os_log("MDI notification scheduled successfully", log: self?.log ?? .default, type: .info)
                 // Track notification history
                 self?.notificationHistory[notificationKey] = Date()
+                
+                // Track analytics
+                MDIAnalytics.shared.track(.notificationSent)
             }
         }
     }
@@ -425,8 +434,14 @@ extension MDINotificationManager: UNUserNotificationCenterDelegate {
     private func handleAcceptAction(for notification: UNNotification) {
         os_log("User accepted MDI recommendation", log: log, type: .info)
         
-        // TODO: Log the injection/action to Core Data
-        // TODO: Open the app to log details if needed
+        // Update recommendation status in Core Data
+        if let recommendationIdString = notification.request.content.userInfo["recommendationId"] as? String,
+           let recommendationId = UUID(uuidString: recommendationIdString) {
+            loopManager?.updateRecommendationStatus(recommendationId, status: .accepted)
+            
+            // Track analytics
+            MDIAnalytics.shared.track(.recommendationAccepted)
+        }
         
         // Post notification for other parts of the app
         NotificationCenter.default.post(
@@ -438,6 +453,15 @@ extension MDINotificationManager: UNUserNotificationCenterDelegate {
     
     private func handleSnoozeAction(for notification: UNNotification) {
         os_log("User snoozed MDI recommendation", log: log, type: .info)
+        
+        // Update recommendation status in Core Data
+        if let recommendationIdString = notification.request.content.userInfo["recommendationId"] as? String,
+           let recommendationId = UUID(uuidString: recommendationIdString) {
+            loopManager?.updateRecommendationStatus(recommendationId, status: .snoozed)
+            
+            // Track analytics
+            MDIAnalytics.shared.track(.recommendationSnoozed)
+        }
         
         // Cancel current notification
         cancelNotification(with: notification.request.identifier)
@@ -454,6 +478,15 @@ extension MDINotificationManager: UNUserNotificationCenterDelegate {
     
     private func handleDismissAction(for notification: UNNotification) {
         os_log("User dismissed MDI recommendation", log: log, type: .info)
+        
+        // Update recommendation status in Core Data
+        if let recommendationIdString = notification.request.content.userInfo["recommendationId"] as? String,
+           let recommendationId = UUID(uuidString: recommendationIdString) {
+            loopManager?.updateRecommendationStatus(recommendationId, status: .dismissed)
+            
+            // Track analytics
+            MDIAnalytics.shared.track(.recommendationDismissed)
+        }
         
         // Post notification for other parts of the app
         NotificationCenter.default.post(

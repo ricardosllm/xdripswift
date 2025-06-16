@@ -1318,6 +1318,7 @@ extension UserDefaults {
         }
     }
     
+    /* Commented out - using iAPS predictions now
     /// selected prediction algorithm type
     var predictionAlgorithmType: PredictionModelType {
         get {
@@ -1331,6 +1332,7 @@ extension UserDefaults {
             set(newValue.rawValue, forKey: Key.predictionAlgorithmType.rawValue)
         }
     }
+    */
     
     /// whether to use automatic algorithm selection based on best fit
     @objc dynamic var predictionAutoSelectAlgorithm: Bool {
@@ -1362,7 +1364,7 @@ extension UserDefaults {
                 return stored
             }
             // Return default - always stored in mg/dL internally
-            return InsulinDefaults.insulinSensitivityMgDl
+            return 50.0 // Default ISF value
         }
         set {
             set(newValue, forKey: Key.insulinSensitivityMgDl.rawValue)
@@ -1373,13 +1375,14 @@ extension UserDefaults {
     var carbRatio: Double {
         get {
             let stored = double(forKey: Key.carbRatio.rawValue)
-            return stored > 0 ? stored : InsulinDefaults.carbRatio
+            return stored > 0 ? stored : 10.0 // Default carb ratio
         }
         set {
             set(newValue, forKey: Key.carbRatio.rawValue)
         }
     }
     
+    /* Commented out - using iAPS insulin profiles now
     /// selected insulin type for IOB calculations
     var insulinType: InsulinType {
         get {
@@ -1393,12 +1396,13 @@ extension UserDefaults {
             set(newValue.rawValue, forKey: Key.insulinType.rawValue)
         }
     }
+    */
     
     /// carb absorption rate in grams per hour
     var carbAbsorptionRate: Double {
         get {
             let stored = double(forKey: Key.carbAbsorptionRate.rawValue)
-            return stored > 0 ? stored : InsulinDefaults.carbAbsorptionRate
+            return stored > 0 ? stored : 20.0 // Default carb absorption rate g/h
         }
         set {
             set(newValue, forKey: Key.carbAbsorptionRate.rawValue)
@@ -1409,7 +1413,7 @@ extension UserDefaults {
     var carbAbsorptionDelay: Double {
         get {
             let stored = double(forKey: Key.carbAbsorptionDelay.rawValue)
-            return stored >= 0 ? stored : InsulinDefaults.carbAbsorptionDelay
+            return stored >= 0 ? stored : 15.0 // Default carb absorption delay in minutes
         }
         set {
             set(newValue, forKey: Key.carbAbsorptionDelay.rawValue)
