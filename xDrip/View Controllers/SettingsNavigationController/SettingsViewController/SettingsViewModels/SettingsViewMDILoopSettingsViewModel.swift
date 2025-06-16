@@ -44,11 +44,14 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
         /// basal insulin units per day
         case basalUnitsPerDay = 7
         
+        /// maximum IOB allowed for predictions
+        case maxIOB = 8
+        
         /// view recommendation history
-        case viewHistory = 8
+        case viewHistory = 9
         
         /// help and documentation
-        case help = 9
+        case help = 10
     }
     
     // MARK: - Protocol Implementation
@@ -128,6 +131,29 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
                     }
                 )
                 
+            case .maxIOB:
+                return SettingsSelectedRowAction.askText(
+                    title: "Maximum IOB",
+                    message: "Maximum insulin on board allowed for predictions (units). This limits how far predictions can extend.",
+                    keyboardType: .decimalPad,
+                    text: String(format: "%.1f", UserDefaults.standard.mdiMaxIOB),
+                    placeHolder: "10.0",
+                    actionTitle: nil,
+                    cancelTitle: nil,
+                    actionHandler: { text in
+                        if let units = Double(text), units > 0 {
+                            UserDefaults.standard.mdiMaxIOB = units
+                        }
+                    },
+                    cancelHandler: nil,
+                    inputValidator: { text in
+                        guard let units = Double(text), units > 0, units <= 50 else {
+                            return "Please enter a valid number between 0.1 and 50"
+                        }
+                        return nil
+                    }
+                )
+                
             case .viewHistory:
                 // Temporarily disable this feature to prevent crashes
                 return .showInfoText(
@@ -177,6 +203,8 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
                 return "Include Graph"
             case .basalUnitsPerDay:
                 return "Basal Insulin (units/day)"
+            case .maxIOB:
+                return "Max IOB for Predictions"
             case .viewHistory:
                 return "View History"
             case .help:
@@ -189,7 +217,7 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
     func accessoryType(index: Int) -> UITableViewCell.AccessoryType {
         if let setting = Setting(rawValue: index) {
             switch setting {
-            case .notificationUrgencyThreshold, .basalUnitsPerDay, .viewHistory, .help:
+            case .notificationUrgencyThreshold, .basalUnitsPerDay, .maxIOB, .viewHistory, .help:
                 return .disclosureIndicator
             default:
                 return .none
@@ -216,6 +244,8 @@ class SettingsViewMDILoopSettingsViewModel: SettingsViewModelProtocol {
             case .basalUnitsPerDay:
                 let units = UserDefaults.standard.mdiBasalUnitsPerDay
                 return String(format: "%.1f units", units)
+            case .maxIOB:
+                return String(format: "%.1f units", UserDefaults.standard.mdiMaxIOB)
             default:
                 return nil
             }

@@ -1028,7 +1028,7 @@ struct ProfileData {
             dia: dia,
             carb_ratio: carbRatio,
             sens: isf,
-            max_iob: 0.0, // MDI users don't have pump basal IOB limits
+            max_iob: userDefaults.mdiMaxIOB, // Use MDI-specific max IOB setting
             max_daily_basal: mdiBasalUnitsPerDay,
             max_basal_rate: basalRate,
             min_bg: minBg,

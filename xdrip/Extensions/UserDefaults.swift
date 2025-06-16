@@ -571,6 +571,9 @@ extension UserDefaults {
         
         /// MDI basal insulin units per day (e.g., Lantus, Tresiba)
         case mdiBasalUnitsPerDay = "mdiBasalUnitsPerDay"
+        
+        /// MDI maximum IOB for predictions
+        case mdiMaxIOB = "mdiMaxIOB"
     }
     
     
@@ -1630,6 +1633,17 @@ extension UserDefaults {
         }
         set {
             set(max(0, newValue), forKey: Key.mdiBasalUnitsPerDay.rawValue)
+        }
+    }
+    
+    /// MDI maximum IOB for predictions
+    @objc dynamic var mdiMaxIOB: Double {
+        get {
+            let value = double(forKey: Key.mdiMaxIOB.rawValue)
+            return value > 0 ? value : 10.0 // Default to 10 units
+        }
+        set {
+            set(max(0, newValue), forKey: Key.mdiMaxIOB.rawValue)
         }
     }
     

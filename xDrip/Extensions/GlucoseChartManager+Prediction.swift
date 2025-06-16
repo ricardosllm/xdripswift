@@ -54,6 +54,12 @@ extension GlucoseChartManager {
             return []
         }
         
+        // Log prediction arrays to understand their length
+        os_log("iAPS Prediction arrays - IOB: %{public}d values, COB: %{public}d values, UAM: %{public}d values, ZT: %{public}d values", 
+               log: .default, type: .info,
+               predictionResult.iob.count, predictionResult.cob.count, 
+               predictionResult.uam.count, predictionResult.zt.count)
+        
         // Convert iAPS predictions to chart points
         var chartPoints: [ChartPoint] = []
         let now = Date()
@@ -141,12 +147,17 @@ extension GlucoseChartManager {
         
         // Filter to only show predictions within the requested time horizon
         let maxPredictionTime = now.addingTimeInterval(predictionHours * 3600)
+        let unfilteredCount = chartPoints.count
         chartPoints = chartPoints.filter { point in
             if let xValue = point.x as? ChartAxisValueDate {
                 return xValue.date <= maxPredictionTime
             }
             return false
         }
+        
+        os_log("Prediction filtering - Before: %{public}d points, After: %{public}d points (max time: %{public}@, prediction hours: %.1f)", 
+               log: .default, type: .info,
+               unfilteredCount, chartPoints.count, maxPredictionTime.description, predictionHours)
         
         // Log successful prediction generation
         if !chartPoints.isEmpty {
