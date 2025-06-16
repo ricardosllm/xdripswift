@@ -37,32 +37,14 @@ fileprivate enum Setting:Int, CaseIterable {
     //urgent low value
     case urgentLowMarkValue = 8
     
-    // show glucose predictions on the main chart
-    case showPredictions = 9
+    // iAPS prediction settings
+    case showIAPSPredictions = 9
     
-    // automatic algorithm selection
-    case autoSelectPredictionAlgorithm = 10
+    // iAPS prediction time horizon (hours)
+    case iAPSPredictionHours = 10
     
-    // manual algorithm selection
-    case selectPredictionAlgorithm = 11
-    
-    // include treatments in predictions
-    case includeTreatmentsInPredictions = 12
-    
-    // insulin sensitivity factor (ISF)
-    case insulinSensitivityFactor = 13
-    
-    // carb ratio (ICR)
-    case carbRatio = 14
-    
-    // insulin type selection
-    case insulinType = 15
-    
-    // carb absorption rate
-    case carbAbsorptionRate = 16
-    
-    // carb absorption delay
-    case carbAbsorptionDelay = 17
+    // show IOB/COB on chart
+    case showIOBCOBOnChart = 11
     
 }
 
@@ -87,28 +69,17 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
         case .showMiniChart:
             return UISwitch(isOn: UserDefaults.standard.showMiniChart, action: {(isOn:Bool) in UserDefaults.standard.showMiniChart = isOn})
             
-        case .showPredictions:
-            return UISwitch(isOn: UserDefaults.standard.predictionEnabled, action: {[weak self] (isOn:Bool) in 
-                UserDefaults.standard.predictionEnabled = isOn
-                // reload section to update enabled states of dependent rows
-                self?.sectionReloadClosure?()
+        case .showIAPSPredictions:
+            return UISwitch(isOn: UserDefaults.standard.showIAPSPredictions, action: {(isOn:Bool) in 
+                UserDefaults.standard.showIAPSPredictions = isOn
             })
             
-        case .autoSelectPredictionAlgorithm:
-            return UISwitch(isOn: UserDefaults.standard.predictionAutoSelectAlgorithm, action: {[weak self] (isOn:Bool) in 
-                UserDefaults.standard.predictionAutoSelectAlgorithm = isOn
-                // reload section to update enabled state of algorithm selection row
-                self?.sectionReloadClosure?()
+        case .showIOBCOBOnChart:
+            return UISwitch(isOn: UserDefaults.standard.showIOBCOBOnChart, action: {(isOn:Bool) in 
+                UserDefaults.standard.showIOBCOBOnChart = isOn
             })
             
-        case .includeTreatmentsInPredictions:
-            return UISwitch(isOn: UserDefaults.standard.predictionIncludeTreatments, action: {[weak self] (isOn:Bool) in 
-                UserDefaults.standard.predictionIncludeTreatments = isOn
-                // reload section to update enabled states of dependent rows
-                self?.sectionReloadClosure?()
-            })
-            
-        case  .screenLockDimmingType, .urgentHighMarkValue, .highMarkValue, .targetMarkValue, .lowMarkValue, .urgentLowMarkValue, .selectPredictionAlgorithm, .insulinSensitivityFactor, .carbRatio, .insulinType, .carbAbsorptionRate, .carbAbsorptionDelay:
+        case  .screenLockDimmingType, .urgentHighMarkValue, .highMarkValue, .targetMarkValue, .lowMarkValue, .urgentLowMarkValue, .iAPSPredictionHours:
             return nil
             
         }
@@ -135,18 +106,9 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
         guard let setting = Setting(rawValue: index) else { fatalError("Unexpected Section") }
         
         switch setting {
-        case .selectPredictionAlgorithm:
-            // Only enabled if predictions are on and auto-select is off
-            return UserDefaults.standard.predictionEnabled && !UserDefaults.standard.predictionAutoSelectAlgorithm
-        case .autoSelectPredictionAlgorithm:
-            // Only enabled if predictions are on
-            return UserDefaults.standard.predictionEnabled
-        case .includeTreatmentsInPredictions:
-            // Only enabled if predictions are on
-            return UserDefaults.standard.predictionEnabled
-        case .insulinSensitivityFactor, .carbRatio, .insulinType, .carbAbsorptionRate, .carbAbsorptionDelay:
-            // Only enabled if predictions are on AND treatments are included
-            return UserDefaults.standard.predictionEnabled && UserDefaults.standard.predictionIncludeTreatments
+        case .iAPSPredictionHours:
+            // Only enabled if iAPS predictions are on
+            return UserDefaults.standard.showIAPSPredictions
         default:
             return true
         }
@@ -233,164 +195,50 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
                 }
             })
             
-        case .showPredictions:
-            return SettingsSelectedRowAction.callFunction(function: {
-                if UserDefaults.standard.predictionEnabled {
-                    UserDefaults.standard.predictionEnabled = false
-                } else {
-                    UserDefaults.standard.predictionEnabled = true
-                }
-            })
-            
-        case .autoSelectPredictionAlgorithm:
-            return SettingsSelectedRowAction.callFunction(function: {
-                if UserDefaults.standard.predictionAutoSelectAlgorithm {
-                    UserDefaults.standard.predictionAutoSelectAlgorithm = false
-                } else {
-                    UserDefaults.standard.predictionAutoSelectAlgorithm = true
-                }
-            })
-            
-        case .selectPredictionAlgorithm:
-            
-            // create list of algorithms
-            var data = [String]()
-            var selectedRow = 0
-            
-            for (index, algorithmType) in PredictionModelType.allCases.enumerated() {
-                data.append(algorithmType.displayName)
-                if algorithmType == UserDefaults.standard.predictionAlgorithmType {
-                    selectedRow = index
-                }
-            }
-            
-            return SettingsSelectedRowAction.selectFromList(title: Texts_SettingsView.selectPredictionAlgorithm, data: data, selectedRow: selectedRow, actionTitle: nil, cancelTitle: nil, actionHandler: {(index:Int) in
-                
-                if index != selectedRow {
-                    UserDefaults.standard.predictionAlgorithmType = PredictionModelType.allCases[index]
-                    
-                    // Mark predictions for update
-                    UserDefaults.standard.predictionsUpdateNeeded = true
-                }
-                
-            }, cancelHandler: nil, didSelectRowHandler: nil)
-            
-        case .includeTreatmentsInPredictions:
+        case .showIAPSPredictions:
             return SettingsSelectedRowAction.callFunction(function: { [weak self] in
-                if UserDefaults.standard.predictionIncludeTreatments {
-                    UserDefaults.standard.predictionIncludeTreatments = false
+                if UserDefaults.standard.showIAPSPredictions {
+                    UserDefaults.standard.showIAPSPredictions = false
                 } else {
-                    UserDefaults.standard.predictionIncludeTreatments = true
+                    UserDefaults.standard.showIAPSPredictions = true
                 }
-                // reload section to update enabled states of dependent rows
+                // reload section to update enabled state of prediction hours row
                 self?.sectionReloadClosure?()
             })
             
-        case .insulinSensitivityFactor:
-            // Get current value and convert to display units
-            let currentValue = UserDefaults.standard.insulinSensitivityMgDl
-            let displayValue = UserDefaults.standard.bloodGlucoseUnitIsMgDl ? currentValue : currentValue.mgDlToMmol()
-            let unitString = UserDefaults.standard.bloodGlucoseUnitIsMgDl ? Texts_Common.mgdl : Texts_Common.mmol
+        // These cases are deprecated and handled in MDI settings
             
+        case .iAPSPredictionHours:
             return SettingsSelectedRowAction.askText(
-                title: Texts_SettingsView.insulinSensitivityFactor,
-                message: String(format: Texts_SettingsView.insulinSensitivityFactorMessage, unitString),
-                keyboardType: UserDefaults.standard.bloodGlucoseUnitIsMgDl ? .numberPad : .decimalPad,
-                text: displayValue.bgValueToString(mgDl: UserDefaults.standard.bloodGlucoseUnitIsMgDl),
-                placeHolder: nil,
-                actionTitle: nil,
-                cancelTitle: nil,
-                actionHandler: {(valueAsString: String) in
-                    if let value = Double(valueAsString) {
-                        // Convert to mg/dL for storage
-                        let valueInMgDl = UserDefaults.standard.bloodGlucoseUnitIsMgDl ? value : value.mmolToMgdl()
-                        UserDefaults.standard.insulinSensitivityMgDl = valueInMgDl
-                    }
-                },
-                cancelHandler: nil,
-                inputValidator: nil
-            )
-            
-        case .carbRatio:
-            return SettingsSelectedRowAction.askText(
-                title: Texts_SettingsView.carbRatio,
-                message: Texts_SettingsView.carbRatioMessage,
+                title: "Prediction Time",
+                message: "How many hours of predictions to show on the chart (0.5 - 4 hours)",
                 keyboardType: .decimalPad,
-                text: UserDefaults.standard.carbRatio.stringWithoutTrailingZeroes,
-                placeHolder: nil,
+                text: String(format: "%.1f", UserDefaults.standard.iAPSPredictionHours),
+                placeHolder: "1.5",
                 actionTitle: nil,
                 cancelTitle: nil,
                 actionHandler: {(valueAsString: String) in
-                    if let value = Double(valueAsString), value > 0 {
-                        UserDefaults.standard.carbRatio = value
+                    if let value = Double(valueAsString), value >= 0.5, value <= 4.0 {
+                        UserDefaults.standard.iAPSPredictionHours = value
                     }
                 },
                 cancelHandler: nil,
-                inputValidator: nil
-            )
-            
-        case .insulinType:
-            // Create list of insulin types
-            var data = [String]()
-            var selectedRow = 0
-            
-            for (index, insulinType) in InsulinType.allCases.enumerated() {
-                data.append(insulinType.displayName)
-                if insulinType == UserDefaults.standard.insulinType {
-                    selectedRow = index
+                inputValidator: { text in
+                    guard let value = Double(text), value >= 0.5, value <= 4.0 else {
+                        return "Please enter a value between 0.5 and 4 hours"
+                    }
+                    return nil
                 }
-            }
-            
-            return SettingsSelectedRowAction.selectFromList(
-                title: Texts_SettingsView.insulinType,
-                data: data,
-                selectedRow: selectedRow,
-                actionTitle: nil,
-                cancelTitle: nil,
-                actionHandler: {(index: Int) in
-                    if index != selectedRow {
-                        UserDefaults.standard.insulinType = InsulinType.allCases[index]
-                    }
-                },
-                cancelHandler: nil,
-                didSelectRowHandler: nil
             )
             
-        case .carbAbsorptionRate:
-            return SettingsSelectedRowAction.askText(
-                title: Texts_SettingsView.carbAbsorptionRate,
-                message: Texts_SettingsView.carbAbsorptionRateMessage,
-                keyboardType: .decimalPad,
-                text: UserDefaults.standard.carbAbsorptionRate.stringWithoutTrailingZeroes,
-                placeHolder: nil,
-                actionTitle: nil,
-                cancelTitle: nil,
-                actionHandler: {(valueAsString: String) in
-                    if let value = Double(valueAsString), value > 0 {
-                        UserDefaults.standard.carbAbsorptionRate = value
-                    }
-                },
-                cancelHandler: nil,
-                inputValidator: nil
-            )
-            
-        case .carbAbsorptionDelay:
-            return SettingsSelectedRowAction.askText(
-                title: Texts_SettingsView.carbAbsorptionDelay,
-                message: Texts_SettingsView.carbAbsorptionDelayMessage,
-                keyboardType: .numberPad,
-                text: Int(UserDefaults.standard.carbAbsorptionDelay).description,
-                placeHolder: nil,
-                actionTitle: nil,
-                cancelTitle: nil,
-                actionHandler: {(valueAsString: String) in
-                    if let value = Double(valueAsString), value >= 0 {
-                        UserDefaults.standard.carbAbsorptionDelay = value
-                    }
-                },
-                cancelHandler: nil,
-                inputValidator: nil
-            )
+        case .showIOBCOBOnChart:
+            return SettingsSelectedRowAction.callFunction(function: {
+                if UserDefaults.standard.showIOBCOBOnChart {
+                    UserDefaults.standard.showIOBCOBOnChart = false
+                } else {
+                    UserDefaults.standard.showIOBCOBOnChart = true
+                }
+            })
         }
     }
     
@@ -434,32 +282,16 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
         case .urgentLowMarkValue:
             return "🔴 " + Texts_SettingsView.labelUrgentLowValue
             
-        case .showPredictions:
-            return Texts_SettingsView.showPredictions
+        case .showIAPSPredictions:
+            return "Show iAPS Predictions"
             
-        case .autoSelectPredictionAlgorithm:
-            return Texts_SettingsView.autoSelectPredictionAlgorithm
+        // Deprecated - handled in MDI settings
             
-        case .selectPredictionAlgorithm:
-            return Texts_SettingsView.selectPredictionAlgorithm
+        case .iAPSPredictionHours:
+            return "Prediction Time Horizon"
             
-        case .includeTreatmentsInPredictions:
-            return Texts_SettingsView.includeTreatmentsInPredictions
-            
-        case .insulinSensitivityFactor:
-            return Texts_SettingsView.insulinSensitivityFactor
-            
-        case .carbRatio:
-            return Texts_SettingsView.carbRatio
-            
-        case .insulinType:
-            return Texts_SettingsView.insulinType
-            
-        case .carbAbsorptionRate:
-            return Texts_SettingsView.carbAbsorptionRate
-            
-        case .carbAbsorptionDelay:
-            return Texts_SettingsView.carbAbsorptionDelay
+        case .showIOBCOBOnChart:
+            return "Show IOB/COB Values"
         }
     }
     
@@ -468,10 +300,10 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
         
         switch setting {
             
-        case .screenLockDimmingType, .urgentHighMarkValue, .highMarkValue, .lowMarkValue, .urgentLowMarkValue, .targetMarkValue, .selectPredictionAlgorithm, .insulinSensitivityFactor, .carbRatio, .insulinType, .carbAbsorptionRate, .carbAbsorptionDelay:
+        case .screenLockDimmingType, .urgentHighMarkValue, .highMarkValue, .lowMarkValue, .urgentLowMarkValue, .targetMarkValue, .iAPSPredictionHours:
             return UITableViewCell.AccessoryType.disclosureIndicator
             
-        case .allowScreenRotation, .showClockWhenScreenIsLocked, .showMiniChart, .showPredictions, .autoSelectPredictionAlgorithm, .includeTreatmentsInPredictions:
+        case .allowScreenRotation, .showClockWhenScreenIsLocked, .showMiniChart, .showIAPSPredictions, .showIOBCOBOnChart:
             return UITableViewCell.AccessoryType.none
             
         }
@@ -500,31 +332,12 @@ class SettingsViewHomeScreenSettingsViewModel:SettingsViewModelProtocol {
         case .screenLockDimmingType:
             return UserDefaults.standard.screenLockDimmingType.description
             
-        case .selectPredictionAlgorithm:
-            if UserDefaults.standard.predictionAutoSelectAlgorithm {
-                return Texts_SettingsView.automatic
-            } else {
-                return UserDefaults.standard.predictionAlgorithmType.displayName
-            }
+        case .iAPSPredictionHours:
+            return String(format: "%.1f hours", UserDefaults.standard.iAPSPredictionHours)
             
-        case .insulinSensitivityFactor:
-            let value = UserDefaults.standard.insulinSensitivityMgDl
-            let displayValue = UserDefaults.standard.bloodGlucoseUnitIsMgDl ? value : value.mgDlToMmol()
-            return displayValue.bgValueToString(mgDl: UserDefaults.standard.bloodGlucoseUnitIsMgDl) + " " + (UserDefaults.standard.bloodGlucoseUnitIsMgDl ? Texts_Common.mgdl : Texts_Common.mmol)
+        // Deprecated - handled in MDI settings
             
-        case .carbRatio:
-            return UserDefaults.standard.carbRatio.stringWithoutTrailingZeroes + " " + Texts_Common.grams
-            
-        case .insulinType:
-            return UserDefaults.standard.insulinType.displayName
-            
-        case .carbAbsorptionRate:
-            return UserDefaults.standard.carbAbsorptionRate.stringWithoutTrailingZeroes + " " + Texts_SettingsView.gramsPerHour
-            
-        case .carbAbsorptionDelay:
-            return Int(UserDefaults.standard.carbAbsorptionDelay).description + " " + Texts_Common.minutes
-            
-        case .allowScreenRotation, .showClockWhenScreenIsLocked, .showMiniChart, .showPredictions, .autoSelectPredictionAlgorithm, .includeTreatmentsInPredictions:
+        case .allowScreenRotation, .showClockWhenScreenIsLocked, .showMiniChart, .showIAPSPredictions, .showIOBCOBOnChart:
             return nil
             
         }

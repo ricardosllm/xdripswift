@@ -628,7 +628,7 @@ final class RootViewController: UIViewController, ObservableObject {
         updateScreenRotationSettings()
         
         // viewWillAppear when user switches eg from Settings Tab to Home Tab - latest reading value needs to be shown on the view, and also update minutes ago etc.
-        updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.predictionEnabled)
+        updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.showIAPSPredictions)
         
         updatePumpAndAIDStatusViews()
         
@@ -668,7 +668,7 @@ final class RootViewController: UIViewController, ObservableObject {
                 self.updateDataSourceInfo()
             }
             
-            self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.predictionEnabled)
+            self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.showIAPSPredictions)
             
             self.updatePumpAndAIDStatusViews()
         }
@@ -794,6 +794,8 @@ final class RootViewController: UIViewController, ObservableObject {
         // nillify the active sensor start date on start-up
         UserDefaults.standard.activeSensorStartDate = nil
         
+        // MDI navigation observers removed - using simple info text instead to prevent crashes
+        
         // Setup Core Data Manager - setting up coreDataManager happens asynchronously
         // completion handler is called when finished. This gives the app time to already continue setup which is independent of coredata, like initializing the views
         coreDataManager = CoreDataManager(modelName: ConstantsCoreData.modelName, completion: {
@@ -804,7 +806,7 @@ final class RootViewController: UIViewController, ObservableObject {
             self.houseKeeper?.doAppStartUpHouseKeeping()
             
             // update label texts, minutes ago, diff and value
-            self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.predictionEnabled)
+            self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.showIAPSPredictions)
             
             // update the mini-chart
             self.updateMiniChart()
@@ -866,8 +868,10 @@ final class RootViewController: UIViewController, ObservableObject {
         // showing or hiding the treatments on the chart
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showTreatmentsOnChart.rawValue, options: .new, context: nil)
         
-        // predictions need update flag
-        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.predictionsUpdateNeeded.rawValue, options: .new, context: nil)
+        // showing or hiding IOB/COB on the chart
+        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showIOBCOBOnChart.rawValue, options: .new, context: nil)
+        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showIOBTrendOnChart.rawValue, options: .new, context: nil)
+        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showCOBTrendOnChart.rawValue, options: .new, context: nil)
         
         // see if the user has changed the statistic days to use
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.daysToUseStatistics.rawValue, options: .new, context: nil)
@@ -897,6 +901,9 @@ final class RootViewController: UIViewController, ObservableObject {
         
         // add observer for followerKeepAliveType, to reset the app badge notification if in follower mode and keep-alive is set to disabled
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.followerBackgroundKeepAliveType.rawValue, options: .new, context: nil)
+        
+        // add observer for MDI Loop enabled setting
+        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.mdiLoopEnabled.rawValue, options: .new, context: nil)
         
         // add observer for the last heartbeat timestamp in order to update the UI
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.timeStampOfLastHeartBeat.rawValue, options: .new, context: nil)
@@ -1041,7 +1048,7 @@ final class RootViewController: UIViewController, ObservableObject {
             // Schedule a call to updateLabelsAndChart when the app comes to the foreground, with a delay of 0.5 seconds. Because the application state is not immediately to .active, as a result, updates may not happen - especially the synctreatments may not happen because this may depend on the application state - by making a call just half a second later, when the status is surely = .active, the UI updates will be done correctly.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 
-                self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.predictionEnabled)
+                self.updateLabelsAndChart(overrideApplicationState: true, updatePredictions: UserDefaults.standard.showIAPSPredictions)
                 
                 self.updateMiniChart()
                 
@@ -1172,6 +1179,15 @@ final class RootViewController: UIViewController, ObservableObject {
         // setup loopManager
         loopManager = LoopManager(coreDataManager: coreDataManager)
         
+        // setup MDI Loop Manager
+        MDILoopManager.shared.configure(coreDataManager: coreDataManager)
+        MDILoopManager.shared.delegate = self
+        
+        // Start MDI Loop if enabled
+        if UserDefaults.standard.mdiLoopEnabled {
+            MDILoopManager.shared.startLoop()
+        }
+        
         // setup dexcomShareUploadManager
         dexcomShareUploadManager = DexcomShareUploadManager(bgReadingsAccessor: bgReadingsAccessor, messageHandler: { (title:String, message:String) in
             
@@ -1296,7 +1312,7 @@ final class RootViewController: UIViewController, ObservableObject {
     /// This is called by the regular update timer to ensure predictions are always visible
     @objc private func updateLabelsAndChartWithPredictions() {
         // Always update predictions when called by the timer to prevent them from disappearing
-        updateLabelsAndChart(updatePredictions: UserDefaults.standard.predictionEnabled)
+        updateLabelsAndChart(updatePredictions: UserDefaults.standard.showIAPSPredictions)
     }
     
     /// process new glucose data received from transmitter.
@@ -1613,7 +1629,7 @@ final class RootViewController: UIViewController, ObservableObject {
                 // Reset to current time (Date()) instead of using glucoseChartManager.endDate
                 // This ensures the chart shows the most recent data when time window buttons are tapped
                 // Also update predictions to ensure they are recalculated for the new time window
-                glucoseChartManager.updateChartPoints(endDate: Date(), startDate: Date().addingTimeInterval(.hours(-UserDefaults.standard.chartWidthInHours)), chartOutlet: chartOutlet, completionHandler: nil, updatePredictions: UserDefaults.standard.predictionEnabled)
+                glucoseChartManager.updateChartPoints(endDate: Date(), startDate: Date().addingTimeInterval(.hours(-UserDefaults.standard.chartWidthInHours)), chartOutlet: chartOutlet, completionHandler: nil, updatePredictions: UserDefaults.standard.showIAPSPredictions)
                 
             }
             
@@ -1725,6 +1741,14 @@ final class RootViewController: UIViewController, ObservableObject {
         case UserDefaults.Key.showTreatmentsOnChart:
             updateChartWithResetEndDate()
             
+        case UserDefaults.Key.showIOBCOBOnChart, UserDefaults.Key.showIOBTrendOnChart, UserDefaults.Key.showCOBTrendOnChart:
+            updateChartWithResetEndDate()
+            updateIOBCOBOverlay()
+            
+        case UserDefaults.Key.showIAPSPredictions, UserDefaults.Key.iAPSPredictionHours, UserDefaults.Key.showIOBPrediction, UserDefaults.Key.showCOBPrediction, UserDefaults.Key.showUAMPrediction:
+            // Force update predictions when any iAPS prediction setting changes
+            updateChartWithResetEndDate(updatePredictions: true)
+            
         case UserDefaults.Key.showClockWhenScreenIsLocked:
             
             // refresh screenLock function if it is currently activated in order to show/hide the clock as requested
@@ -1762,13 +1786,10 @@ final class RootViewController: UIViewController, ObservableObject {
         case UserDefaults.Key.updateSnoozeStatus:
             updateSnoozeStatus()
             
-        case UserDefaults.Key.predictionsUpdateNeeded:
-            if UserDefaults.standard.predictionsUpdateNeeded {
-                // update chart with predictions
-                updateLabelsAndChart(updatePredictions: true)
-                // reset the flag
-                UserDefaults.standard.predictionsUpdateNeeded = false
-            }
+            
+        case UserDefaults.Key.mdiLoopEnabled:
+            // Start or stop MDI Loop based on settings
+            updateMDILoopStatus()
             
         default:
             break
@@ -2424,6 +2445,7 @@ final class RootViewController: UIViewController, ObservableObject {
         }
         
         // if data is stale (over 11 minutes old), show it as gray colour to indicate that it isn't current
+        
         // if not, then set color, depending on value lower than low mark or higher than high mark
         // set both HIGH and LOW BG values to red as previous yellow for hig is now not so obvious due to in-range colour of green.
         if lastReading.timeStamp < Date(timeIntervalSinceNow: -60 * 11) {
@@ -2465,6 +2487,14 @@ final class RootViewController: UIViewController, ObservableObject {
         
         // force a snooze status update to see if the current snooze status has changed in the last minutes
         updateSnoozeStatus()
+        
+        // Add predicted glucose value if predictions are enabled - MUST be after all normal labels are set
+        if UserDefaults.standard.showIAPSPredictions {
+            addPredictedGlucoseToLabel(currentReading: lastReading, bgReadings: latestReadings)
+        } else {
+            // Remove prediction label if predictions are disabled
+            view.viewWithTag(9999)?.removeFromSuperview()
+        }
         
         // possibly landscpaeValueViewController is on top now, let's update also the labels in that viewcontroller
         updateLabelsInLandscapeValueViewController()
@@ -2510,6 +2540,99 @@ final class RootViewController: UIViewController, ObservableObject {
         
         // update the mini chart
         updateMiniChart()
+        
+        // update IOB/COB overlay if enabled
+        updateIOBCOBOverlay()
+    }
+    
+    /// Updates the IOB/COB overlay on the main chart if enabled
+    private func updateIOBCOBOverlay() {
+        guard UserDefaults.standard.showIOBCOBOnChart else {
+            // Remove any existing overlay if setting is disabled
+            chartOutlet.subviews.forEach { view in
+                if view.tag == 999 {
+                    view.removeFromSuperview()
+                }
+            }
+            return
+        }
+        
+        // Remove any existing overlay
+        chartOutlet.subviews.forEach { view in
+            if view.tag == 999 {
+                view.removeFromSuperview()
+            }
+        }
+        
+        // Create overlay container
+        let overlayView = UIView()
+        overlayView.tag = 999
+        overlayView.translatesAutoresizingMaskIntoConstraints = false
+        overlayView.backgroundColor = UIColor.systemBackground.withAlphaComponent(0.9)
+        overlayView.layer.cornerRadius = 8
+        overlayView.layer.borderColor = UIColor.systemGray3.cgColor
+        overlayView.layer.borderWidth = 0.5
+        
+        // Create IOB/COB label
+        let iobCobLabel = UILabel()
+        iobCobLabel.translatesAutoresizingMaskIntoConstraints = false
+        iobCobLabel.font = UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .medium)
+        iobCobLabel.textColor = UIColor.label
+        iobCobLabel.textAlignment = .left
+        
+        // TODO: Calculate actual IOB/COB when calculators are added
+        // For now, show placeholder values
+        let iobValue = 2.5
+        let cobValue = 35.0
+        
+        // Format the display text
+        let attributedString = NSMutableAttributedString()
+        
+        // IOB section
+        attributedString.append(NSAttributedString(string: "IOB: ", attributes: [
+            .font: UIFont.systemFont(ofSize: 12, weight: .regular),
+            .foregroundColor: UIColor.secondaryLabel
+        ]))
+        
+        attributedString.append(NSAttributedString(string: String(format: "%.1fU", iobValue), attributes: [
+            .font: UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .semibold),
+            .foregroundColor: UIColor.systemBlue
+        ]))
+        
+        // Separator
+        attributedString.append(NSAttributedString(string: "  |  "))
+        
+        // COB section
+        attributedString.append(NSAttributedString(string: "COB: ", attributes: [
+            .font: UIFont.systemFont(ofSize: 12, weight: .regular),
+            .foregroundColor: UIColor.secondaryLabel
+        ]))
+        
+        attributedString.append(NSAttributedString(string: String(format: "%.0fg", cobValue), attributes: [
+            .font: UIFont.monospacedDigitSystemFont(ofSize: 14, weight: .semibold),
+            .foregroundColor: UIColor.systemOrange
+        ]))
+        
+        iobCobLabel.attributedText = attributedString
+        
+        // Add label to overlay
+        overlayView.addSubview(iobCobLabel)
+        
+        // Add overlay to chart
+        chartOutlet.addSubview(overlayView)
+        
+        // Set constraints
+        NSLayoutConstraint.activate([
+            // Position overlay in top-left corner with padding
+            overlayView.topAnchor.constraint(equalTo: chartOutlet.topAnchor, constant: 16),
+            overlayView.leadingAnchor.constraint(equalTo: chartOutlet.leadingAnchor, constant: 16),
+            
+            // Label constraints within overlay
+            iobCobLabel.topAnchor.constraint(equalTo: overlayView.topAnchor, constant: 8),
+            iobCobLabel.bottomAnchor.constraint(equalTo: overlayView.bottomAnchor, constant: -8),
+            iobCobLabel.leadingAnchor.constraint(equalTo: overlayView.leadingAnchor, constant: 12),
+            iobCobLabel.trailingAnchor.constraint(equalTo: overlayView.trailingAnchor, constant: -12)
+        ])
     }
     
     /// if the user has chosen to show the mini-chart, then update it. If not, just return without doing anything.
@@ -4066,6 +4189,11 @@ extension RootViewController: UNUserNotificationCenterDelegate {
             // call completionhandler to show the notification even though the app is in the foreground, without sound
             completionHandler([.banner, .list])
             
+        } else if notification.request.content.categoryIdentifier == "MDI_RECOMMENDATION" {
+            
+            // MDI Loop recommendation notification - show it even when app is in foreground
+            completionHandler([.banner, .list, .sound])
+            
         }
     }
     
@@ -4103,6 +4231,14 @@ extension RootViewController: UNUserNotificationCenterDelegate {
                 
                 trace("     userNotificationCenter didReceive, user pressed an alert notification to open the app", log: log, category: ConstantsLog.categoryRootView, type: .info)
                 PickerViewControllerModal.displayPickerViewController(pickerViewData: pickerViewData, parentController: self)
+                
+            } else if response.notification.request.content.categoryIdentifier == "MDI_RECOMMENDATION" {
+                
+                // Handle MDI notification response
+                trace("     userNotificationCenter didReceive, user interacted with MDI notification", log: log, category: ConstantsLog.categoryRootView, type: .info)
+                
+                // Let MDINotificationManager handle the action
+                MDINotificationManager.shared.userNotificationCenter(center, didReceive: response, withCompletionHandler: {})
                 
             } else {
                 // it as also not an alert notification that the user clicked, there might come in other types of notifications in the future
@@ -4245,4 +4381,423 @@ extension RootViewController: UIGestureRecognizerDelegate {
         
     }
     
+}
+
+// MARK: - MDILoopManagerDelegate
+
+extension RootViewController: MDILoopManagerDelegate {
+    
+    func mdiLoopManager(_ manager: MDILoopManagerProtocol, didChangeStatus isRunning: Bool) {
+        trace("MDI Loop status changed to: %{public}@", log: self.log, category: ConstantsLog.categoryRootView, type: .info, isRunning.description)
+        
+        // Update UI if needed
+        DispatchQueue.main.async { [weak self] in
+            // Could update a status indicator in the future
+            _ = self
+        }
+    }
+    
+    func mdiLoopManager(_ manager: MDILoopManagerProtocol, didGenerateRecommendation recommendation: MDIRecommendation) {
+        trace("MDI Loop generated recommendation: %{public}@", log: self.log, category: ConstantsLog.categoryRootView, type: .info, recommendation.reason)
+        
+        // The notification is already sent by MDINotificationManager
+        // Here we could update UI or log to Core Data in the future
+    }
+    
+    func mdiLoopManager(_ manager: MDILoopManagerProtocol, didEncounterError error: MDIError) {
+        trace("MDI Loop failed with error: %{public}@", log: self.log, category: ConstantsLog.categoryRootView, type: .error, error.localizedDescription)
+        
+        // Show alert to user
+        DispatchQueue.main.async { [weak self] in
+            let alert = UIAlertController(
+                title: Texts_Common.warning,
+                message: "MDI Loop error: \(error.localizedDescription)",
+                actionHandler: nil
+            )
+            self?.present(alert, animated: true, completion: nil)
+        }
+    }
+}
+
+// MARK: - MDI Loop Control
+
+extension RootViewController {
+    
+    /// Start or stop MDI Loop based on settings
+    func updateMDILoopStatus() {
+        let mdiLoopManager = MDILoopManager.shared
+        
+        if UserDefaults.standard.mdiLoopEnabled {
+            // Start the loop if it's not already running
+            if !mdiLoopManager.isRunning {
+                mdiLoopManager.startLoop()
+            }
+        } else {
+            // Stop the loop if it's running
+            mdiLoopManager.stopLoop()
+        }
+    }
+    
+    /* Commented out - these navigation methods were causing crashes
+    /// Show MDI History view controller
+    @objc func showMDIHistory() {
+        trace("showMDIHistory called", log: self.log, category: ConstantsLog.categoryRootView, type: .info)
+        
+        guard let coreDataManager = coreDataManager else { 
+            trace("coreDataManager is nil", log: self.log, category: ConstantsLog.categoryRootView, type: .error)
+            return 
+        }
+        
+        let historyVC = MDIHistoryViewController()
+        historyVC.configure(coreDataManager: coreDataManager)
+        
+        // Check if we're currently showing settings - if so, use the presented navigation controller
+        if let presentedNav = self.presentedViewController as? UINavigationController {
+            trace("Using presented navigation controller", log: self.log, category: ConstantsLog.categoryRootView, type: .info)
+            presentedNav.pushViewController(historyVC, animated: true)
+        } else if let nav = navigationController {
+            trace("Using root navigation controller", log: self.log, category: ConstantsLog.categoryRootView, type: .info)
+            nav.pushViewController(historyVC, animated: true)
+        } else {
+            trace("No navigation controller found", log: self.log, category: ConstantsLog.categoryRootView, type: .error)
+        }
+    }
+    
+    /// Show MDI Help view controller
+    @objc func showMDIHelp() {
+        let helpVC = MDIHelpViewController()
+        navigationController?.pushViewController(helpVC, animated: true)
+    }
+    */
+    
+    // MARK: - Prediction Display
+    
+    /// Add predicted glucose value as a new label below the chart
+    private func addPredictedGlucoseToLabel(currentReading: BgReading, bgReadings: [BgReading]) {
+        
+        // Get prediction value at user's configured time horizon (convert hours to minutes)
+        let predictionMinutes = Int(UserDefaults.standard.iAPSPredictionHours * 60)
+        
+        // Try to use cached predictions from chart if available and recent
+        var predictionResult: iAPSPredictionManager.PredictionResult? = nil
+        
+        // If no cached predictions, generate new ones
+        if predictionResult == nil {
+            // Get treatment entries for predictions
+            guard let treatmentEntryAccessor = treatmentEntryAccessor,
+                  let coreDataManager = coreDataManager else { return }
+            let endTime = Date()
+            let startTime = endTime.addingTimeInterval(-24 * 3600) // Last 24 hours
+            let treatments = treatmentEntryAccessor.getTreatments(fromDate: startTime, toDate: endTime, on: coreDataManager.mainManagedObjectContext)
+            
+            // Generate predictions using iAPS
+            let iAPSManager = iAPSPredictionManager()
+            predictionResult = iAPSManager.generatePredictions(glucose: Array(bgReadings), treatments: treatments)
+        }
+        
+        guard let predictions = predictionResult else { return }
+        
+        // Get prediction value at desired time
+        // Predictions are in 5-minute intervals, so index = minutes / 5
+        let predictionIndex = predictionMinutes / 5
+        
+        // Use IOB prediction by default (most conservative)
+        var predictedValue: Double? = nil
+        
+        // Check if we have enough prediction points
+        // If not, use the last available prediction
+        if predictionIndex < predictions.iob.count {
+            predictedValue = predictions.iob[predictionIndex]
+        } else if !predictions.iob.isEmpty {
+            // Use the last available prediction if we don't have data that far
+            predictedValue = predictions.iob.last
+            // Log that we're using a shorter prediction
+            trace("Prediction requested for %d minutes but only have %d points (up to %d minutes)", 
+                  log: log, category: ConstantsLog.categoryRootView, type: .info,
+                  predictionMinutes, predictions.iob.count, predictions.iob.count * 5)
+        }
+        
+        // If we have a predicted value, create a new label for it
+        if let predicted = predictedValue {
+            let mgdl = UserDefaults.standard.bloodGlucoseUnitIsMgDl
+            
+            // Convert predicted value to user's unit
+            let predictedInUserUnit = predicted.mgDlToMmol(mgDl: mgdl)
+            let predictedString = predictedInUserUnit.bgValueToString(mgDl: mgdl)
+            
+            // Calculate future time
+            let futureTime = Date().addingTimeInterval(TimeInterval(predictionMinutes * 60))
+            let timeFormatter = DateFormatter()
+            timeFormatter.dateFormat = "HH:mm"
+            let futureTimeString = timeFormatter.string(from: futureTime)
+            
+            // Create prediction text
+            let predictionText = "→\(predictedString) @ \(futureTimeString)"
+            
+            // Remove any existing prediction label
+            view.viewWithTag(9999)?.removeFromSuperview()
+            
+            // Create a new label for the prediction
+            let predictionLabel = UILabel()
+            predictionLabel.tag = 9999 // Tag for easy removal later
+            predictionLabel.text = predictionText
+            predictionLabel.font = UIFont.systemFont(ofSize: 13) // Similar size to "mins ago"
+            predictionLabel.textColor = getPredictionColor(current: currentReading.calculatedValue, predicted: predicted)
+            predictionLabel.textAlignment = .right
+            predictionLabel.translatesAutoresizingMaskIntoConstraints = false
+            
+            // Add the label to the view
+            view.addSubview(predictionLabel)
+            
+            // Position it relative to the chart outlet, aligned with the delta labels
+            NSLayoutConstraint.activate([
+                // Align trailing edge with the diff unit label for consistent right alignment
+                predictionLabel.trailingAnchor.constraint(equalTo: diffLabelUnitOutlet.trailingAnchor),
+                // Position it just above the chart
+                predictionLabel.bottomAnchor.constraint(equalTo: chartOutlet.topAnchor, constant: -5),
+                // Set a minimum width
+                predictionLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 100)
+            ])
+        } else {
+            // Remove prediction label if no prediction available
+            view.viewWithTag(9999)?.removeFromSuperview()
+        }
+    }
+    
+    /// Get color for prediction based on trend
+    private func getPredictionColor(current: Double, predicted: Double) -> UIColor {
+        let mgdl = UserDefaults.standard.bloodGlucoseUnitIsMgDl
+        let highMark = UserDefaults.standard.highMarkValueInUserChosenUnit.mmolToMgdl(mgDl: mgdl)
+        let lowMark = UserDefaults.standard.lowMarkValueInUserChosenUnit.mmolToMgdl(mgDl: mgdl)
+        let targetMark = UserDefaults.standard.targetMarkValueInUserChosenUnit.mmolToMgdl(mgDl: mgdl)
+        
+        // If predicted is moving toward target, show green
+        let currentDistanceFromTarget = abs(current - targetMark)
+        let predictedDistanceFromTarget = abs(predicted - targetMark)
+        
+        if predictedDistanceFromTarget < currentDistanceFromTarget {
+            // Moving toward target - good!
+            return UIColor.systemGreen.withAlphaComponent(0.8)
+        } else if predicted > highMark {
+            // Going high
+            return UIColor.systemOrange.withAlphaComponent(0.8)
+        } else if predicted < lowMark {
+            // Going low
+            return UIColor.systemRed.withAlphaComponent(0.8)
+        } else {
+            // In range but not improving
+            return UIColor.systemGray.withAlphaComponent(0.8)
+        }
+    }
+}
+
+// MARK: - iAPS Algorithm Testing
+
+extension RootViewController {
+    
+    /// Test iAPS algorithm integration
+    @objc func testIAPSAlgorithms() {
+        trace("Testing iAPS algorithms", log: log, category: ConstantsLog.categoryRootView, type: .info)
+        
+        let iapsManager = iAPSPredictionManager()
+        
+        // Test JavaScript execution first
+        if iapsManager.testJavaScriptExecution() {
+            trace("iAPS JavaScript execution test passed", log: log, category: ConstantsLog.categoryRootView, type: .info)
+            
+            // Get recent glucose readings
+            guard let bgReadingsAccessor = self.bgReadingsAccessor else {
+                trace("bgReadingsAccessor not available", log: log, category: ConstantsLog.categoryRootView, type: .error)
+                return
+            }
+            let bgReadings = bgReadingsAccessor.getLatestBgReadings(limit: 48, fromDate: nil, forSensor: nil, ignoreRawData: false, ignoreCalculatedValue: false) // Last 4 hours of data
+            
+            // Get recent treatments
+            guard let treatmentEntryAccessor = self.treatmentEntryAccessor else {
+                trace("treatmentEntryAccessor not available", log: log, category: ConstantsLog.categoryRootView, type: .error)
+                return
+            }
+            let treatments = treatmentEntryAccessor.getLatestTreatments(limit: 100, fromDate: Date().addingTimeInterval(-24 * 3600)) // Last 24 hours
+            
+            // Generate predictions
+            if let predictions = iapsManager.generatePredictions(glucose: bgReadings, treatments: treatments) {
+                trace("iAPS predictions generated successfully", log: log, category: ConstantsLog.categoryRootView, type: .info)
+                trace("IOB predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.iob.description)
+                trace("COB predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.cob.description)
+                
+                // Show alert with results
+                let isMgDl = UserDefaults.standard.bloodGlucoseUnitIsMgDl
+                let unitString = isMgDl ? "mg/dL" : "mmol/L"
+                
+                // Debug: Log raw prediction values
+                trace("Raw IOB predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.iob.description)
+                trace("Raw COB predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.cob.description)
+                trace("Raw ZT predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.zt.description)
+                trace("Raw UAM predictions: %{public}@", log: log, category: ConstantsLog.categoryRootView, type: .info, predictions.uam.description)
+                
+                // Convert predictions to user's preferred unit
+                let iobVals = predictions.iob.prefix(5).map { isMgDl ? String(format: "%.0f", $0) : String(format: "%.1f", $0 / 18.0) }
+                let cobVals = predictions.cob.prefix(5).map { isMgDl ? String(format: "%.0f", $0) : String(format: "%.1f", $0 / 18.0) }
+                let ztVals = predictions.zt.prefix(5).map { isMgDl ? String(format: "%.0f", $0) : String(format: "%.1f", $0 / 18.0) }
+                let uamVals = predictions.uam.prefix(5).map { isMgDl ? String(format: "%.0f", $0) : String(format: "%.1f", $0 / 18.0) }
+                
+                // Get current BG
+                let currentBG = bgReadings.first?.calculatedValue ?? 0
+                let currentBGStr = isMgDl ? String(format: "%.0f", currentBG) : String(format: "%.1f", currentBG / 18.0)
+                
+                // Count treatments
+                let insulinCount = treatments.filter { $0.treatmentType == .Insulin }.count
+                let carbCount = treatments.filter { $0.treatmentType == .Carbs }.count
+                let recentInsulin = treatments.filter { $0.treatmentType == .Insulin && $0.date > Date().addingTimeInterval(-4 * 3600) }
+                let recentCarbs = treatments.filter { $0.treatmentType == .Carbs && $0.date > Date().addingTimeInterval(-3 * 3600) }
+                let totalInsulin = recentInsulin.reduce(0.0) { $0 + $1.value }
+                let totalCarbs = recentCarbs.reduce(0.0) { $0 + $1.value }
+                
+                // Get profile settings
+                let dia = UserDefaults.standard.object(forKey: "insulinDuration") as? Double ?? 4.0
+                let carbRatio = UserDefaults.standard.object(forKey: "carbRatio") as? Double ?? 10.0
+                let isf = UserDefaults.standard.object(forKey: "insulinSensitivityFactor") as? Double ?? 50.0
+                
+                let debugVersion = "v5.1-iobarray-fix" // Update this with each build
+                
+                // Debug: Test with hardcoded values
+                let testIOB = 2.0 // 2 units
+                let testISF = 50.0 // 50 mg/dL per unit
+                let testDIA = 4.0 // hours
+                let testCOB = 10.0 // 10g carbs
+                let testCarbRatio = 15.0 // 15g per unit
+                
+                // Expected effects:
+                // IOB should drop BG by: 2 units * 50 mg/dL = 100 mg/dL over 4 hours
+                // COB should raise BG by: 10g / 15g/u * 50 mg/dL = 33 mg/dL over 3 hours
+                
+                // Get all debug logs from iAPSPredictionManager
+                let allDebugLogs = iapsManager.getDebugLogs()
+                
+                let debugInfo = """
+                
+                Debug Math Test:
+                IOB effect: \(testIOB) units * \(testISF) ISF = \(testIOB * testISF) mg/dL drop
+                COB effect: \(testCOB)g / \(testCarbRatio) ratio * \(testISF) ISF = \(testCOB / testCarbRatio * testISF) mg/dL rise
+                
+                Debug Logs:
+                \(allDebugLogs)
+                """
+                
+                let message = """
+                Debug Version: \(debugVersion)
+                Current BG: \(currentBGStr) \(unitString)
+                
+                Profile Settings:
+                DIA: \(dia) hours, ISF: \(isf), Carb Ratio: \(carbRatio)
+                
+                Recent Treatments:
+                Total Insulin (last \(dia)h): \(String(format: "%.1f", totalInsulin)) units
+                Total Carbs (last 3h): \(String(format: "%.0f", totalCarbs)) g
+                Found \(insulinCount) insulin, \(carbCount) carb entries
+                
+                Predictions (next 25 min):
+                IOB: \(iobVals.joined(separator: ", "))...
+                COB: \(cobVals.joined(separator: ", "))...
+                ZT: \(ztVals.joined(separator: ", "))...
+                UAM: \(uamVals.joined(separator: ", "))...
+                
+                IOB = Insulin on Board effect
+                COB = Carbs on Board effect
+                ZT = Zero Temp (no insulin)
+                UAM = Unannounced Meal
+                \(debugInfo)
+                """
+                
+                let alert = UIAlertController(title: "iAPS Predictions", message: message, preferredStyle: .alert)
+                
+                // Add OK button
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                
+                // Add Copy button
+                alert.addAction(UIAlertAction(title: "Copy Debug Info", style: .default) { _ in
+                    UIPasteboard.general.string = message
+                    
+                    // Show confirmation
+                    let copyAlert = UIAlertController(title: "Copied!", message: "Debug info copied to clipboard", preferredStyle: .alert)
+                    copyAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(copyAlert, animated: true)
+                })
+                
+                self.present(alert, animated: true, completion: nil)
+            } else {
+                trace("Failed to generate iAPS predictions", log: log, category: ConstantsLog.categoryRootView, type: .error)
+                
+                let debugVersion = "v5.0-iob-fix"
+                let errorMessage = """
+                Debug Version: \(debugVersion)
+                
+                Failed to generate predictions
+                
+                Data counts:
+                BG Readings: \(bgReadings.count)
+                Treatments: \(treatments.count)
+                
+                Recent treatments:
+                \(treatments.prefix(5).map { t in
+                    "\(t.treatmentType.asString()): \(t.value) at \(t.date.formatted())"
+                }.joined(separator: "\n"))
+                
+                Debug logs:
+                \(iapsManager.getDebugLogs())
+                """
+                
+                let alert = UIAlertController(title: "iAPS Test Failed", message: errorMessage, preferredStyle: .alert)
+                
+                // Add OK button
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                
+                // Add Copy button
+                alert.addAction(UIAlertAction(title: "Copy Debug Info", style: .default) { _ in
+                    UIPasteboard.general.string = errorMessage
+                    
+                    // Show confirmation
+                    let copyAlert = UIAlertController(title: "Copied!", message: "Debug info copied to clipboard", preferredStyle: .alert)
+                    copyAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                    self.present(copyAlert, animated: true)
+                })
+                
+                self.present(alert, animated: true, completion: nil)
+            }
+        } else {
+            trace("iAPS JavaScript execution test failed", log: log, category: ConstantsLog.categoryRootView, type: .error)
+            
+            let debugVersion = "v4.2-debug-logs"
+            let jsErrorMessage = """
+            Debug Version: \(debugVersion)
+            
+            JavaScript engine test failed.
+            
+            This means the iAPS JavaScript files
+            could not be loaded or executed.
+            
+            Check that bundle contains:
+            - iob.js
+            - meal.js
+            - determine-basal.js
+            """
+            
+            let alert = UIAlertController(title: "iAPS Test Failed", message: jsErrorMessage, preferredStyle: .alert)
+            
+            // Add OK button
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            
+            // Add Copy button
+            alert.addAction(UIAlertAction(title: "Copy Debug Info", style: .default) { _ in
+                UIPasteboard.general.string = jsErrorMessage
+                
+                // Show confirmation
+                let copyAlert = UIAlertController(title: "Copied!", message: "Debug info copied to clipboard", preferredStyle: .alert)
+                copyAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                self.present(copyAlert, animated: true)
+            })
+            
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
 }

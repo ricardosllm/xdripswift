@@ -107,6 +107,15 @@ extension UserDefaults {
         
         /// should the treatments be shown on the main chart?
         case showTreatmentsOnChart = "showTreatmentsOnChart"
+        
+        /// show IOB/COB values on chart
+        case showIOBCOBOnChart = "showIOBCOBOnChart"
+        
+        /// show IOB trend line on chart
+        case showIOBTrendOnChart = "showIOBTrendOnChart"
+        
+        /// show COB trend line on chart
+        case showCOBTrendOnChart = "showCOBTrendOnChart"
         /// micro-bolus threshold level in units
         case smallBolusTreatmentThreshold = "smallBolusTreatmentThreshold"
         /// should the micro-boluses be listed in the treatment list/table?
@@ -458,20 +467,22 @@ extension UserDefaults {
         /// force StandBy mode to show a big number version of the widget
         case forceStandByBigNumbers = "forceStandByBigNumbers"
         
-        /// enable glucose prediction on the main chart
-        case predictionEnabled = "predictionEnabled"
+        // MARK: - iAPS Prediction Settings
         
-        /// flag to indicate that predictions need to be updated due to treatment changes
-        case predictionsUpdateNeeded = "predictionsUpdateNeeded"
+        /// show iAPS predictions on main chart
+        case showIAPSPredictions = "showIAPSPredictions"
         
-        /// selected prediction algorithm type
-        case predictionAlgorithmType = "predictionAlgorithmType"
+        /// iAPS prediction time horizon in hours
+        case iAPSPredictionHours = "iAPSPredictionHours"
         
-        /// whether to use automatic algorithm selection based on best fit
-        case predictionAutoSelectAlgorithm = "predictionAutoSelectAlgorithm"
+        /// show IOB-only prediction line
+        case showIOBPrediction = "showIOBPrediction"
         
-        /// whether to include treatments (IOB/COB) in predictions
-        case predictionIncludeTreatments = "predictionIncludeTreatments"
+        /// show COB prediction line
+        case showCOBPrediction = "showCOBPrediction"
+        
+        /// show UAM prediction line
+        case showUAMPrediction = "showUAMPrediction"
         
         /// insulin sensitivity factor (ISF) - how much 1 unit drops glucose in mg/dL
         case insulinSensitivityMgDl = "insulinSensitivityMgDl"
@@ -487,6 +498,65 @@ extension UserDefaults {
         
         /// carb absorption delay in minutes
         case carbAbsorptionDelay = "carbAbsorptionDelay"
+        
+        // MARK: - MDI Loop Emulation
+        
+        /// enable MDI loop emulation feature
+        case mdiLoopEnabled = "mdiLoopEnabled"
+        
+        /// enable MDI loop notifications
+        case mdiNotificationsEnabled = "mdiNotificationsEnabled"
+        
+        /// show prediction impact in notifications
+        case mdiShowPredictionImpact = "mdiShowPredictionImpact"
+        
+        /// notification urgency threshold - only notify if predicted to go outside this range
+        case mdiNotificationUrgencyThreshold = "mdiNotificationUrgencyThreshold"
+        
+        /// enable pre-meal reminders based on patterns
+        case mdiPreMealRemindersEnabled = "mdiPreMealRemindersEnabled"
+        
+        /// notification sound enabled
+        case mdiNotificationSoundEnabled = "mdiNotificationSoundEnabled"
+        
+        /// include graph in notification
+        case mdiIncludeGraphInNotification = "mdiIncludeGraphInNotification"
+        
+        /// show prediction graph in notifications
+        case mdiShowPredictionGraph = "mdiShowPredictionGraph"
+        
+        /// enable quiet hours for MDI notifications
+        case mdiQuietHoursEnabled = "mdiQuietHoursEnabled"
+        
+        /// quiet hours start (hour of day, 0-23)
+        case mdiQuietHoursStart = "mdiQuietHoursStart"
+        
+        /// quiet hours end (hour of day, 0-23)
+        case mdiQuietHoursEnd = "mdiQuietHoursEnd"
+        
+        /// maximum correction bolus allowed
+        case mdiMaxCorrectionBolus = "mdiMaxCorrectionBolus"
+        
+        /// minimum time between corrections in minutes
+        case mdiMinTimeBetweenCorrections = "mdiMinTimeBetweenCorrections"
+        
+        /// minimum BG for correction
+        case mdiMinBGForCorrection = "mdiMinBGForCorrection"
+        
+        /// maximum BG for no action
+        case mdiMaxBGForNoAction = "mdiMaxBGForNoAction"
+        
+        /// maximum IOB multiplier
+        case mdiMaxIOBMultiplier = "mdiMaxIOBMultiplier"
+        
+        /// maximum meal bolus allowed
+        case mdiMaxMealBolus = "mdiMaxMealBolus"
+        
+        /// MDI basal insulin units per day (e.g., Lantus, Tresiba)
+        case mdiBasalUnitsPerDay = "mdiBasalUnitsPerDay"
+        
+        /// MDI maximum IOB for predictions
+        case mdiMaxIOB = "mdiMaxIOB"
     }
     
     
@@ -1103,6 +1173,36 @@ extension UserDefaults {
         }
     }
     
+    /// show IOB/COB values on chart
+    @objc dynamic var showIOBCOBOnChart: Bool {
+        get {
+            return bool(forKey: Key.showIOBCOBOnChart.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.showIOBCOBOnChart.rawValue)
+        }
+    }
+    
+    /// show IOB trend line on chart
+    @objc dynamic var showIOBTrendOnChart: Bool {
+        get {
+            return bool(forKey: Key.showIOBTrendOnChart.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.showIOBTrendOnChart.rawValue)
+        }
+    }
+    
+    /// show COB trend line on chart
+    @objc dynamic var showCOBTrendOnChart: Bool {
+        get {
+            return bool(forKey: Key.showCOBTrendOnChart.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.showCOBTrendOnChart.rawValue)
+        }
+    }
+    
     /// should the app show the micro-bolus treatments in the treatments list/table?
     @objc dynamic var showSmallBolusTreatmentsInList: Bool {
         // default value for bool in userdefaults is false, by default we want the app to *hide* the micro-bolus treatments in the treatments table
@@ -1193,53 +1293,6 @@ extension UserDefaults {
         }
     }
     
-    
-    /// flag to indicate predictions need update
-    @objc dynamic var predictionsUpdateNeeded: Bool {
-        get {
-            return bool(forKey: Key.predictionsUpdateNeeded.rawValue)
-        }
-        set {
-            set(newValue, forKey: Key.predictionsUpdateNeeded.rawValue)
-        }
-    }
-    
-    /// selected prediction algorithm type
-    var predictionAlgorithmType: PredictionModelType {
-        get {
-            if let savedType = string(forKey: Key.predictionAlgorithmType.rawValue),
-               let modelType = PredictionModelType(rawValue: savedType) {
-                return modelType
-            }
-            return .polynomial // Default to polynomial
-        }
-        set {
-            set(newValue.rawValue, forKey: Key.predictionAlgorithmType.rawValue)
-        }
-    }
-    
-    /// whether to use automatic algorithm selection based on best fit
-    @objc dynamic var predictionAutoSelectAlgorithm: Bool {
-        get {
-            // Default to true for automatic selection
-            return object(forKey: Key.predictionAutoSelectAlgorithm.rawValue) as? Bool ?? true
-        }
-        set {
-            set(newValue, forKey: Key.predictionAutoSelectAlgorithm.rawValue)
-        }
-    }
-    
-    /// whether to include treatments (IOB/COB) in predictions
-    @objc dynamic var predictionIncludeTreatments: Bool {
-        get {
-            // Default to true to include treatments
-            return object(forKey: Key.predictionIncludeTreatments.rawValue) as? Bool ?? true
-        }
-        set {
-            set(newValue, forKey: Key.predictionIncludeTreatments.rawValue)
-        }
-    }
-    
     /// insulin sensitivity factor (ISF) - how much 1 unit drops glucose
     var insulinSensitivityMgDl: Double {
         get {
@@ -1248,7 +1301,7 @@ extension UserDefaults {
                 return stored
             }
             // Return default - always stored in mg/dL internally
-            return InsulinDefaults.insulinSensitivityMgDl
+            return 50.0 // Default ISF value
         }
         set {
             set(newValue, forKey: Key.insulinSensitivityMgDl.rawValue)
@@ -1259,13 +1312,14 @@ extension UserDefaults {
     var carbRatio: Double {
         get {
             let stored = double(forKey: Key.carbRatio.rawValue)
-            return stored > 0 ? stored : InsulinDefaults.carbRatio
+            return stored > 0 ? stored : 10.0 // Default carb ratio
         }
         set {
             set(newValue, forKey: Key.carbRatio.rawValue)
         }
     }
     
+    /* Commented out - using iAPS insulin profiles now
     /// selected insulin type for IOB calculations
     var insulinType: InsulinType {
         get {
@@ -1279,12 +1333,13 @@ extension UserDefaults {
             set(newValue.rawValue, forKey: Key.insulinType.rawValue)
         }
     }
+    */
     
     /// carb absorption rate in grams per hour
     var carbAbsorptionRate: Double {
         get {
             let stored = double(forKey: Key.carbAbsorptionRate.rawValue)
-            return stored > 0 ? stored : InsulinDefaults.carbAbsorptionRate
+            return stored > 0 ? stored : 20.0 // Default carb absorption rate g/h
         }
         set {
             set(newValue, forKey: Key.carbAbsorptionRate.rawValue)
@@ -1295,10 +1350,234 @@ extension UserDefaults {
     var carbAbsorptionDelay: Double {
         get {
             let stored = double(forKey: Key.carbAbsorptionDelay.rawValue)
-            return stored >= 0 ? stored : InsulinDefaults.carbAbsorptionDelay
+            return stored >= 0 ? stored : 15.0 // Default carb absorption delay in minutes
         }
         set {
             set(newValue, forKey: Key.carbAbsorptionDelay.rawValue)
+        }
+    }
+    
+    // MARK: - MDI Loop Emulation Settings
+    
+    /// enable MDI loop emulation feature
+    @objc dynamic var mdiLoopEnabled: Bool {
+        get {
+            return bool(forKey: Key.mdiLoopEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiLoopEnabled.rawValue)
+        }
+    }
+    
+    /// enable MDI loop notifications
+    @objc dynamic var mdiNotificationsEnabled: Bool {
+        get {
+            // Default to true when MDI loop is first enabled
+            if object(forKey: Key.mdiNotificationsEnabled.rawValue) == nil {
+                return true
+            }
+            return bool(forKey: Key.mdiNotificationsEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiNotificationsEnabled.rawValue)
+        }
+    }
+    
+    /// show prediction impact in notifications
+    @objc dynamic var mdiShowPredictionImpact: Bool {
+        get {
+            // Default to true
+            if object(forKey: Key.mdiShowPredictionImpact.rawValue) == nil {
+                return true
+            }
+            return bool(forKey: Key.mdiShowPredictionImpact.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiShowPredictionImpact.rawValue)
+        }
+    }
+    
+    /// notification urgency threshold - only notify if predicted to go outside this range
+    var mdiNotificationUrgencyThreshold: String {
+        get {
+            return string(forKey: Key.mdiNotificationUrgencyThreshold.rawValue) ?? "high"
+        }
+        set {
+            set(newValue, forKey: Key.mdiNotificationUrgencyThreshold.rawValue)
+        }
+    }
+    
+    /// enable pre-meal reminders based on patterns
+    @objc dynamic var mdiPreMealRemindersEnabled: Bool {
+        get {
+            return bool(forKey: Key.mdiPreMealRemindersEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiPreMealRemindersEnabled.rawValue)
+        }
+    }
+    
+    /// notification sound enabled
+    @objc dynamic var mdiNotificationSoundEnabled: Bool {
+        get {
+            // Default to true
+            if object(forKey: Key.mdiNotificationSoundEnabled.rawValue) == nil {
+                return true
+            }
+            return bool(forKey: Key.mdiNotificationSoundEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiNotificationSoundEnabled.rawValue)
+        }
+    }
+    
+    /// include graph in notification
+    @objc dynamic var mdiIncludeGraphInNotification: Bool {
+        get {
+            return bool(forKey: Key.mdiIncludeGraphInNotification.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiIncludeGraphInNotification.rawValue)
+        }
+    }
+    
+    /// Maximum correction bolus allowed (safety limit)
+    @objc dynamic var mdiMaxCorrectionBolus: Double {
+        get {
+            // Default to 5 units if not set
+            let value = double(forKey: Key.mdiMaxCorrectionBolus.rawValue)
+            return value > 0 ? value : 5.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMaxCorrectionBolus.rawValue)
+        }
+    }
+    
+    /// Minimum time between correction boluses in minutes
+    @objc dynamic var mdiMinTimeBetweenCorrections: Int {
+        get {
+            // Default to 60 minutes if not set
+            let value = integer(forKey: Key.mdiMinTimeBetweenCorrections.rawValue)
+            return value > 0 ? value : 60
+        }
+        set {
+            set(newValue, forKey: Key.mdiMinTimeBetweenCorrections.rawValue)
+        }
+    }
+    
+    /// Minimum BG value to allow correction bolus
+    @objc dynamic var mdiMinBGForCorrection: Double {
+        get {
+            // Default to 120 mg/dL if not set
+            let value = double(forKey: Key.mdiMinBGForCorrection.rawValue)
+            return value > 0 ? value : 120.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMinBGForCorrection.rawValue)
+        }
+    }
+    
+    /// Maximum BG before requiring action
+    @objc dynamic var mdiMaxBGForNoAction: Double {
+        get {
+            // Default to 180 mg/dL if not set
+            let value = double(forKey: Key.mdiMaxBGForNoAction.rawValue)
+            return value > 0 ? value : 180.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMaxBGForNoAction.rawValue)
+        }
+    }
+    
+    /// Maximum IOB as multiple of ISF
+    @objc dynamic var mdiMaxIOBMultiplier: Double {
+        get {
+            // Default to 2.0x ISF if not set
+            let value = double(forKey: Key.mdiMaxIOBMultiplier.rawValue)
+            return value > 0 ? value : 2.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMaxIOBMultiplier.rawValue)
+        }
+    }
+    
+    /// Maximum meal bolus allowed (safety limit)
+    @objc dynamic var mdiMaxMealBolus: Double {
+        get {
+            // Default to 10 units if not set
+            let value = double(forKey: Key.mdiMaxMealBolus.rawValue)
+            return value > 0 ? value : 10.0
+        }
+        set {
+            set(newValue, forKey: Key.mdiMaxMealBolus.rawValue)
+        }
+    }
+    
+    /// show prediction graph in notifications
+    @objc dynamic var mdiShowPredictionGraph: Bool {
+        get {
+            // Default to true for high/critical notifications
+            if object(forKey: Key.mdiShowPredictionGraph.rawValue) == nil {
+                return true
+            }
+            return bool(forKey: Key.mdiShowPredictionGraph.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiShowPredictionGraph.rawValue)
+        }
+    }
+    
+    /// enable quiet hours for MDI notifications
+    @objc dynamic var mdiQuietHoursEnabled: Bool {
+        get {
+            return bool(forKey: Key.mdiQuietHoursEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.mdiQuietHoursEnabled.rawValue)
+        }
+    }
+    
+    /// quiet hours start (hour of day, 0-23)
+    @objc dynamic var mdiQuietHoursStart: Int {
+        get {
+            let value = integer(forKey: Key.mdiQuietHoursStart.rawValue)
+            return value >= 0 ? value : 22 // Default to 10 PM
+        }
+        set {
+            set(max(0, min(23, newValue)), forKey: Key.mdiQuietHoursStart.rawValue)
+        }
+    }
+    
+    /// quiet hours end (hour of day, 0-23)
+    @objc dynamic var mdiQuietHoursEnd: Int {
+        get {
+            let value = integer(forKey: Key.mdiQuietHoursEnd.rawValue)
+            return value >= 0 ? value : 7 // Default to 7 AM
+        }
+        set {
+            set(max(0, min(23, newValue)), forKey: Key.mdiQuietHoursEnd.rawValue)
+        }
+    }
+    
+    /// MDI basal insulin units per day (e.g., Lantus, Tresiba)
+    @objc dynamic var mdiBasalUnitsPerDay: Double {
+        get {
+            let value = double(forKey: Key.mdiBasalUnitsPerDay.rawValue)
+            return value > 0 ? value : 24.0 // Default to 24 units/day
+        }
+        set {
+            set(max(0, newValue), forKey: Key.mdiBasalUnitsPerDay.rawValue)
+        }
+    }
+    
+    /// MDI maximum IOB for predictions
+    @objc dynamic var mdiMaxIOB: Double {
+        get {
+            let value = double(forKey: Key.mdiMaxIOB.rawValue)
+            return value > 0 ? value : 10.0 // Default to 10 units
+        }
+        set {
+            set(max(0, newValue), forKey: Key.mdiMaxIOB.rawValue)
         }
     }
     

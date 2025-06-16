@@ -40,11 +40,16 @@ fileprivate enum Setting:Int, CaseIterable {
     /// force StandBy mode to show a big number version of the widget
     case forceStandByBigNumbers = 11
     
+    /// test iAPS algorithms integration
+    case testIAPSAlgorithms = 12
+    
 }
 
 class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProtocol {
     
     var sectionReloadClosure: (() -> Void)?
+    
+    private weak var uiViewController: UIViewController?
     
     func storeSectionReloadClosure(sectionReloadClosure: @escaping (() -> Void)) {
         self.sectionReloadClosure = sectionReloadClosure
@@ -52,7 +57,9 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
     
     func storeRowReloadClosure(rowReloadClosure: @escaping ((Int) -> Void)) {}
     
-    func storeUIViewController(uIViewController: UIViewController) {}
+    func storeUIViewController(uIViewController: UIViewController) {
+        self.uiViewController = uIViewController
+    }
     
     func storeMessageHandler(messageHandler: ((String, String) -> Void)) {
         // this ViewModel does need to send back messages to the viewcontroller asynchronously
@@ -103,6 +110,9 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
             
         case .forceStandByBigNumbers:
             return Texts_SettingsView.forceStandByBigNumbers
+            
+        case .testIAPSAlgorithms:
+            return "Test iAPS Algorithms"
         }
     }
     
@@ -115,7 +125,7 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
         case .showDeveloperSettings, .NSLogEnabled, .OSLogEnabled, .suppressUnLockPayLoad, .shareToLoopOnceEvery5Minutes, .allowStandByHighContrast, .forceStandByBigNumbers:
             return .none
             
-        case .loopShareType, .loopDelay, .libreLinkUpVersion, .remainingComplicationUserInfoTransfers, .CAGEMaxHours:
+        case .loopShareType, .loopDelay, .libreLinkUpVersion, .remainingComplicationUserInfoTransfers, .CAGEMaxHours, .testIAPSAlgorithms:
             return .disclosureIndicator
             
         }
@@ -127,7 +137,7 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
         
         switch setting {
             
-        case .showDeveloperSettings, .NSLogEnabled, .OSLogEnabled, .suppressUnLockPayLoad, .shareToLoopOnceEvery5Minutes, .loopDelay, .allowStandByHighContrast, .forceStandByBigNumbers:
+        case .showDeveloperSettings, .NSLogEnabled, .OSLogEnabled, .suppressUnLockPayLoad, .shareToLoopOnceEvery5Minutes, .loopDelay, .allowStandByHighContrast, .forceStandByBigNumbers, .testIAPSAlgorithms:
             return nil
             
         case .loopShareType:
@@ -220,7 +230,7 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
                 
             })
             
-        case .loopShareType, .loopDelay, .remainingComplicationUserInfoTransfers, .libreLinkUpVersion, .CAGEMaxHours:
+        case .loopShareType, .loopDelay, .remainingComplicationUserInfoTransfers, .libreLinkUpVersion, .CAGEMaxHours, .testIAPSAlgorithms:
             return nil
             
         }
@@ -306,6 +316,60 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
                     }
                 }
             }, cancelHandler: nil, inputValidator: nil)
+            
+        case .testIAPSAlgorithms:
+            return .callFunction { [weak self] in
+                // Find the root view controller in the navigation hierarchy
+                var currentVC = self?.uiViewController
+                while currentVC != nil {
+                    if let rootVC = currentVC as? RootViewController {
+                        rootVC.testIAPSAlgorithms()
+                        return
+                    }
+                    // Check if it's in a navigation controller
+                    if let navController = currentVC?.navigationController {
+                        for vc in navController.viewControllers {
+                            if let rootVC = vc as? RootViewController {
+                                rootVC.testIAPSAlgorithms()
+                                return
+                            }
+                        }
+                    }
+                    // Check tab bar controller
+                    if let tabBarController = currentVC?.tabBarController {
+                        for vc in tabBarController.viewControllers ?? [] {
+                            if let navController = vc as? UINavigationController {
+                                for navVC in navController.viewControllers {
+                                    if let rootVC = navVC as? RootViewController {
+                                        rootVC.testIAPSAlgorithms()
+                                        return
+                                    }
+                                }
+                            } else if let rootVC = vc as? RootViewController {
+                                rootVC.testIAPSAlgorithms()
+                                return
+                            }
+                        }
+                    }
+                    currentVC = currentVC?.parent
+                }
+                
+                // If we still can't find it, try the app delegate window
+                if let rootVC = UIApplication.shared.windows.first?.rootViewController as? RootViewController {
+                    rootVC.testIAPSAlgorithms()
+                } else if let tabBarController = UIApplication.shared.windows.first?.rootViewController as? UITabBarController {
+                    for vc in tabBarController.viewControllers ?? [] {
+                        if let navController = vc as? UINavigationController {
+                            for navVC in navController.viewControllers {
+                                if let rootVC = navVC as? RootViewController {
+                                    rootVC.testIAPSAlgorithms()
+                                    return
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     

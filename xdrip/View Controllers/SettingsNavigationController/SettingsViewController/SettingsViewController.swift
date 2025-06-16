@@ -41,11 +41,17 @@ final class SettingsViewController: UIViewController {
         ///Home Screen settings - urgent high, high, target, low and urgent low values for guidelines
         case homescreen
         
+        /// Chart settings - treatments, IOB/COB display
+        // case chartSettings // Temporarily disabled until file is added to project
+        
         /// statistics settings
         case statistics
         
         /// predictions settings - integrated into home screen settings
         // case predictions
+        
+        /// MDI Loop settings
+        case mdiLoop
         
         /// alarms
         case alarms
@@ -99,10 +105,14 @@ final class SettingsViewController: UIViewController {
                 return SettingsViewAppearanceSettingsViewModel()
             case .homescreen:
                 return SettingsViewHomeScreenSettingsViewModel()
+            // case .chartSettings:
+            //     return SettingsViewChartSettingsViewModel()
             case .statistics:
                 return SettingsViewStatisticsSettingsViewModel()
             // case .predictions:
             //     return SettingsViewPredictionSettingsViewModel()
+            case .mdiLoop:
+                return SettingsViewMDILoopSettingsViewModel()
             case .alarms:
                 return SettingsViewAlertSettingsViewModel()
             case .nightscout:

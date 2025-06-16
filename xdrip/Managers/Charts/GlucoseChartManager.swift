@@ -405,13 +405,12 @@ public class GlucoseChartManager {
             // Store original time interval to maintain consistent window
             let originalTimeInterval = self.endDate.timeIntervalSince(self.startDate)
             
-            // Extend endDate into the future when predictions are enabled
-            // Use 1/4 of the chart width as the prediction extension
+            // Extend endDate into the future when iAPS predictions are enabled
+            // Use the user-configured prediction hours from settings
             let endDateToUse: Date
-            if UserDefaults.standard.predictionEnabled {
-                let chartWidthHours = UserDefaults.standard.chartWidthInHours
-                let predictionExtensionHours = chartWidthHours / 4.0
-                endDateToUse = endDate.addingTimeInterval(.hours(predictionExtensionHours))
+            if UserDefaults.standard.showIAPSPredictions {
+                let predictionHours = UserDefaults.standard.iAPSPredictionHours
+                endDateToUse = endDate.addingTimeInterval(.hours(predictionHours))
             } else {
                 endDateToUse = endDate
             }
@@ -517,21 +516,21 @@ public class GlucoseChartManager {
             // get calibrations from coredata
             let calibrationChartPoints = self.getCalibrationChartPoints(startDate: startDateToUse, endDate: endDateToUse, calibrationsAccessor: self.data().calibrationsAccessor, on: self.coreDataManager.privateManagedObjectContext)
             
-            // get predictions if enabled and updatePredictions is true
+            // get iAPS predictions if enabled and updatePredictions is true
             var predictionChartPoints = [ChartPoint]()
             var shouldGeneratePredictions = false
             
             // Use tuples to pass reading data to main thread
             var readingDataArray: [(timestamp: Date, value: Double)] = []
             
-            if UserDefaults.standard.predictionEnabled && updatePredictions {
+            if UserDefaults.standard.showIAPSPredictions && updatePredictions {
                 // Get readings and extract data on background thread
                 let recentBgReadings = self.data().bgReadingsAccessor.getBgReadings(from: startDateToUse.addingTimeInterval(-3600), to: endDate, on: self.coreDataManager.privateManagedObjectContext)
                 
                 // Extract data from Core Data objects while still on background thread
                 readingDataArray = recentBgReadings.map { (timestamp: $0.timeStamp, value: $0.calculatedValue) }
                 shouldGeneratePredictions = true
-            } else if UserDefaults.standard.predictionEnabled {
+            } else if UserDefaults.standard.showIAPSPredictions {
                 // reuse existing prediction points if not updating
                 predictionChartPoints = self.predictionChartPoints
             }
@@ -543,27 +542,12 @@ public class GlucoseChartManager {
                 // get treatments from coredata
                 let treatmentChartPoints: TreatmentChartPointsType = self.getTreatmentChartPoints(startDate: startDateToUse, endDate: endDateToUse, treatmentEntryAccessor: self.data().treatmentEntryAccessor, bgReadingsAccessor: self.data().bgReadingsAccessor, on: self.coreDataManager.privateManagedObjectContext)
                 
-                // assign treatment arrays
-                self.treatmentChartPoints.smallBolus = treatmentChartPoints.smallBolus
-                self.treatmentChartPoints.mediumBolus = treatmentChartPoints.mediumBolus
-                self.treatmentChartPoints.largeBolus = treatmentChartPoints.largeBolus
-                self.treatmentChartPoints.veryLargeBolus = treatmentChartPoints.veryLargeBolus
-                
-                self.treatmentChartPoints.smallCarbs = treatmentChartPoints.smallCarbs
-                self.treatmentChartPoints.mediumCarbs = treatmentChartPoints.mediumCarbs
-                self.treatmentChartPoints.largeCarbs = treatmentChartPoints.largeCarbs
-                self.treatmentChartPoints.veryLargeCarbs = treatmentChartPoints.veryLargeCarbs
-                
-                self.treatmentChartPoints.bgChecks = treatmentChartPoints.bgChecks
-                
-                self.treatmentChartPoints.scheduledBasalRates = treatmentChartPoints.scheduledBasalRates
-                
-                self.treatmentChartPoints.basalRates = treatmentChartPoints.basalRates
-                self.treatmentChartPoints.basalRatesFill = treatmentChartPoints.basalRatesFill
+                // assign treatment arrays - create new tuple since tuples are immutable
+                self.treatmentChartPoints = treatmentChartPoints
                 
             }
             
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [shouldGeneratePredictions] in
                 
                 // so we're in the main thread, now endDate and startDate and glucoseChartPoints can be safely assigned to value that was passed in the call to updateChartPoints
                 // IMPORTANT: Store the original endDate, not the extended one used for predictions
@@ -585,32 +569,38 @@ public class GlucoseChartManager {
                 // assign calibrationChartPoints to newCalibrationChartPoints
                 self.calibrationChartPoints = calibrationChartPoints
                 
-                // Generate predictions on main thread if needed
+                // Generate iAPS predictions on main thread if needed
                 if shouldGeneratePredictions && !readingDataArray.isEmpty {
-                    trace("Generating predictions - shouldGenerate: true, readings: %{public}d", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, readingDataArray.count)
+                    trace("Generating iAPS predictions - shouldGenerate: true, readings: %{public}d", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, readingDataArray.count)
                     // Fetch BgReadings from Core Data for prediction generation
                     // We need actual BgReading objects, not just the data tuples
                     let bgReadingsAccessor = BgReadingsAccessor(coreDataManager: self.coreDataManager)
                     let bgReadings = bgReadingsAccessor.getBgReadings(
-                        from: startDateToUse,
+                        from: startDateToUse.addingTimeInterval(-3600), // Get extra hour for prediction accuracy
                         to: endDate,
                         on: self.coreDataManager.mainManagedObjectContext
                     )
                     
-                    // Generate predictions using the actual BgReading objects
+                    // Generate iAPS predictions using the actual BgReading objects
                     if !bgReadings.isEmpty {
                         trace("Calling generatePredictionChartPoints with %{public}d readings", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, bgReadings.count)
                         predictionChartPoints = self.generatePredictionChartPoints(bgReadings: bgReadings, endDate: endDateToUse)
-                        trace("Generated %{public}d prediction points", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, predictionChartPoints.count)
+                        trace("Generated %{public}d iAPS prediction points", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, predictionChartPoints.count)
                     } else {
-                        trace("No BgReadings found for prediction generation", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info)
+                        trace("No BgReadings found for iAPS prediction generation", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info)
                     }
                 } else {
-                    trace("Not generating predictions - shouldGenerate: %{public}@, readings: %{public}d", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, shouldGeneratePredictions.description, readingDataArray.count)
+                    trace("Not generating iAPS predictions - shouldGenerate: %{public}@, readings: %{public}d", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, shouldGeneratePredictions.description, readingDataArray.count)
                 }
                 
                 // assign predictionChartPoints
                 self.predictionChartPoints = predictionChartPoints
+                
+                // If predictions were generated, invalidate the chart to force regeneration
+                if shouldGeneratePredictions && !predictionChartPoints.isEmpty {
+                    trace("Invalidating glucose chart to display %{public}d predictions", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, predictionChartPoints.count)
+                    self.glucoseChart = nil
+                }
                 
                 // assign the bolus treatment chart points
                 self.smallBolusTreatmentChartPoints = self.treatmentChartPoints.smallBolus
@@ -710,7 +700,7 @@ public class GlucoseChartManager {
         let currentLowTarget = UserDefaults.standard.urgentLowMarkValue
         let currentHighTarget = UserDefaults.standard.urgentHighMarkValue
         let showTreatments = UserDefaults.standard.showTreatmentsOnChart
-        let showPredictions = UserDefaults.standard.predictionEnabled
+        let showPredictions = UserDefaults.standard.showIAPSPredictions
         
         // Check if cache indicates update is needed
         let needsUpdate = chartCache.needsUpdate(
@@ -752,7 +742,7 @@ public class GlucoseChartManager {
             lowTarget: UserDefaults.standard.urgentLowMarkValue,
             highTarget: UserDefaults.standard.urgentHighMarkValue,
             showTreatments: UserDefaults.standard.showTreatmentsOnChart,
-            showPredictions: UserDefaults.standard.predictionEnabled
+            showPredictions: UserDefaults.standard.showIAPSPredictions
         )
     }
     
@@ -1278,21 +1268,22 @@ public class GlucoseChartManager {
         
         layers.append(contentsOf: layersGlucoseCircles)
         
-        // Add prediction layers if enabled and available
-        if UserDefaults.standard.predictionEnabled && !predictionChartPoints.isEmpty {
-            trace("Adding prediction layer with %{public}d points", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, predictionChartPoints.count)
-            let predictionLineModel = ChartLineModel(
-                chartPoints: predictionChartPoints, 
-                lineColor: ConstantsGlucoseChart.predictionLineColor, 
-                lineWidth: ConstantsGlucoseChart.predictionLineWidth, 
-                animDuration: 0, 
-                animDelay: 0,
-                dashPattern: [6, 3] // Make predictions a dashed line for clarity
-            )
-            let predictionLayer = ChartPointsLineLayer(xAxis: xAxisLayer.axis, yAxis: yAxisLayer.axis, lineModels: [predictionLineModel])
-            layers.append(predictionLayer)
+        // Add iAPS prediction layers if enabled and available
+        trace("Checking predictions - enabled: %{public}@, points count: %{public}d", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, UserDefaults.standard.showIAPSPredictions.description, predictionChartPoints.count)
+        
+        if UserDefaults.standard.showIAPSPredictions && !predictionChartPoints.isEmpty {
+            trace("Adding iAPS prediction layer with %{public}d points", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, predictionChartPoints.count)
+            
+            // Use the createPredictionLineLayer method from the extension
+            if let predictionLayer = createPredictionLineLayer(
+                predictionChartPoints: predictionChartPoints,
+                xAxisLayer: xAxisLayer,
+                yAxisLayer: yAxisLayer
+            ) {
+                layers.append(predictionLayer)
+            }
         } else {
-            trace("Predictions not shown - enabled: %{public}@, points: %{public}d", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, UserDefaults.standard.predictionEnabled.description, predictionChartPoints.count)
+            trace("iAPS predictions not shown - enabled: %{public}@, points: %{public}d", log: self.oslog, category: ConstantsLog.categoryGlucoseChartManager, type: .info, UserDefaults.standard.showIAPSPredictions.description, predictionChartPoints.count)
         }
         
         if UserDefaults.standard.showTreatmentsOnChart {
@@ -1326,12 +1317,11 @@ public class GlucoseChartManager {
     
     private func generateXAxisValues() -> [ChartAxisValue] {
         
-        // When predictions are enabled, extend the endDate for x-axis generation
+        // When iAPS predictions are enabled, extend the endDate for x-axis generation
         let endDateForAxis: Date
-        if UserDefaults.standard.predictionEnabled {
-            let chartWidthHours = UserDefaults.standard.chartWidthInHours
-            let predictionExtensionHours = chartWidthHours / 4.0
-            endDateForAxis = endDate.addingTimeInterval(.hours(predictionExtensionHours))
+        if UserDefaults.standard.showIAPSPredictions {
+            let predictionHours = UserDefaults.standard.iAPSPredictionHours
+            endDateForAxis = endDate.addingTimeInterval(.hours(predictionHours))
         } else {
             endDateForAxis = endDate
         }
