@@ -230,9 +230,6 @@ class TreatmentsInsertViewController: UIViewController {
 
                         // trigger nightscoutsync
                         self.setNightscoutSyncRequiredToTrue()
-                        
-                        // trigger prediction update
-                        UserDefaults.standard.predictionsUpdateNeeded = true
                     }
                     
                 } else {
@@ -246,9 +243,6 @@ class TreatmentsInsertViewController: UIViewController {
                         
                         // trigger nightscoutsync
                         self.setNightscoutSyncRequiredToTrue()
-                        
-                        // trigger prediction update
-                        UserDefaults.standard.predictionsUpdateNeeded = true
                         
                         self.treatMentEntryToUpdate = nil
                     }

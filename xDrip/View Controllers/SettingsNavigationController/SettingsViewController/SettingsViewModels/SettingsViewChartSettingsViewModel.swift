@@ -20,8 +20,8 @@ struct SettingsViewChartSettingsViewModel: SettingsViewModelProtocol {
             return "Show IOB Trend Line"
         case .showCOBTrendOnChart:
             return "Show COB Trend Line"
-        case .predictionEnabled:
-            return "Enable Predictions"
+        case .showIAPSPredictions:
+            return "Enable iAPS Predictions"
         }
     }
     
@@ -37,8 +37,8 @@ struct SettingsViewChartSettingsViewModel: SettingsViewModelProtocol {
             return "Show IOB decay as a trend line"
         case .showCOBTrendOnChart:
             return "Show COB absorption as a trend line"
-        case .predictionEnabled:
-            return "Show glucose predictions on chart"
+        case .showIAPSPredictions:
+            return "Show iAPS algorithm predictions on chart"
         }
     }
     
@@ -54,8 +54,8 @@ struct SettingsViewChartSettingsViewModel: SettingsViewModelProtocol {
             return UserDefaults.standard.showIOBTrendOnChart ? .checkmark : .none
         case .showCOBTrendOnChart:
             return UserDefaults.standard.showCOBTrendOnChart ? .checkmark : .none
-        case .predictionEnabled:
-            return UserDefaults.standard.predictionEnabled ? .checkmark : .none
+        case .showIAPSPredictions:
+            return UserDefaults.standard.showIAPSPredictions ? .checkmark : .none
         }
     }
     
@@ -79,9 +79,9 @@ struct SettingsViewChartSettingsViewModel: SettingsViewModelProtocol {
             return .callFunction {
                 UserDefaults.standard.showCOBTrendOnChart.toggle()
             }
-        case .predictionEnabled:
+        case .showIAPSPredictions:
             return .callFunction {
-                UserDefaults.standard.predictionEnabled.toggle()
+                UserDefaults.standard.showIAPSPredictions.toggle()
             }
         }
     }
@@ -104,6 +104,6 @@ extension SettingsViewChartSettingsViewModel {
         case showIOBCOBOnChart = 1
         case showIOBTrendOnChart = 2
         case showCOBTrendOnChart = 3
-        case predictionEnabled = 4
+        case showIAPSPredictions = 4
     }
 }

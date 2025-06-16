@@ -289,64 +289,59 @@ extension GlucoseChartManager {
 
 extension UserDefaults {
     
+    // MARK: - Deprecated Prediction Settings (kept for migration)
+    
     /// Whether glucose prediction is enabled (old setting - deprecated)
+    /// Migrate to showIAPSPredictions
+    @available(*, deprecated, message: "Use showIAPSPredictions instead")
     var predictionEnabled: Bool {
         get { bool(forKey: "predictionEnabled") }
         set { set(newValue, forKey: "predictionEnabled") }
     }
     
-    /// Prediction time horizon in minutes (default: 30)
-    var predictionTimeHorizon: Int {
-        get { 
-            let value = integer(forKey: "predictionTimeHorizon")
-            return value > 0 ? value : 30
+    /// Prediction time horizon in hours (old setting - deprecated)
+    /// Migrate to iAPSPredictionHours
+    @available(*, deprecated, message: "Use iAPSPredictionHours instead")
+    var predictionTimeHorizon: Double {
+        get {
+            let value = double(forKey: "predictionTimeHorizon")
+            return value > 0 ? value : 3.0
         }
         set { set(newValue, forKey: "predictionTimeHorizon") }
     }
     
-    /// Whether to show prediction confidence bands
+    /// Whether to show prediction confidence bands (old setting - deprecated)
+    @available(*, deprecated, message: "No longer supported")
     var showPredictionConfidence: Bool {
         get { bool(forKey: "showPredictionConfidence") }
         set { set(newValue, forKey: "showPredictionConfidence") }
     }
     
-    /// Prediction line color
-    var predictionLineColor: UIColor {
-        get {
-            if let colorData = data(forKey: "predictionLineColor"),
-               let color = try? NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: colorData) {
-                return color
-            }
-            return UIColor.systemBlue.withAlphaComponent(0.7)
-        }
-        set {
-            if let colorData = try? NSKeyedArchiver.archivedData(withRootObject: newValue, requiringSecureCoding: false) {
-                set(colorData, forKey: "predictionLineColor")
-            }
-        }
+    /// Prediction line color name (old setting - deprecated)
+    @available(*, deprecated, message: "No longer configurable")
+    var predictionLineColor: String {
+        get { string(forKey: "predictionLineColor") ?? "systemBlue" }
+        set { set(newValue, forKey: "predictionLineColor") }
     }
     
-    /// Prediction line width (default: 2.0)
-    var predictionLineWidth: CGFloat {
-        get {
-            let value = double(forKey: "predictionLineWidth")
-            return value > 0 ? CGFloat(value) : 2.0
-        }
-        set { set(Double(newValue), forKey: "predictionLineWidth") }
+    /// Prediction line width (old setting - deprecated)
+    @available(*, deprecated, message: "No longer configurable")
+    var predictionLineWidth: Double {
+        get { double(forKey: "predictionLineWidth") }
+        set { set(newValue, forKey: "predictionLineWidth") }
     }
     
-    /// Whether low glucose prediction alerts are enabled
+    /// Whether low glucose prediction alerts are enabled (old setting - deprecated)
+    @available(*, deprecated, message: "Use iAPS prediction alerts instead")
     var lowGlucosePredictionEnabled: Bool {
         get { bool(forKey: "lowGlucosePredictionEnabled") }
         set { set(newValue, forKey: "lowGlucosePredictionEnabled") }
     }
     
-    /// Low glucose prediction threshold in mg/dL (default: 70.0)
+    /// Low glucose prediction threshold (old setting - deprecated)
+    @available(*, deprecated, message: "Use iAPS prediction alerts instead")
     var lowGlucosePredictionThreshold: Double {
-        get {
-            let value = double(forKey: "lowGlucosePredictionThreshold")
-            return value > 0 ? value : 70.0
-        }
+        get { double(forKey: "lowGlucosePredictionThreshold") }
         set { set(newValue, forKey: "lowGlucosePredictionThreshold") }
     }
     

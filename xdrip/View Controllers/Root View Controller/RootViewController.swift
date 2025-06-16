@@ -873,9 +873,6 @@ final class RootViewController: UIViewController, ObservableObject {
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showIOBTrendOnChart.rawValue, options: .new, context: nil)
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.showCOBTrendOnChart.rawValue, options: .new, context: nil)
         
-        // predictions need update flag
-        UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.predictionsUpdateNeeded.rawValue, options: .new, context: nil)
-        
         // see if the user has changed the statistic days to use
         UserDefaults.standard.addObserver(self, forKeyPath: UserDefaults.Key.daysToUseStatistics.rawValue, options: .new, context: nil)
         
@@ -1789,13 +1786,6 @@ final class RootViewController: UIViewController, ObservableObject {
         case UserDefaults.Key.updateSnoozeStatus:
             updateSnoozeStatus()
             
-        case UserDefaults.Key.predictionsUpdateNeeded:
-            if UserDefaults.standard.predictionsUpdateNeeded {
-                // update chart with predictions
-                updateLabelsAndChart(updatePredictions: true)
-                // reset the flag
-                UserDefaults.standard.predictionsUpdateNeeded = false
-            }
             
         case UserDefaults.Key.mdiLoopEnabled:
             // Start or stop MDI Loop based on settings
@@ -2455,6 +2445,7 @@ final class RootViewController: UIViewController, ObservableObject {
         }
         
         // if data is stale (over 11 minutes old), show it as gray colour to indicate that it isn't current
+        
         // if not, then set color, depending on value lower than low mark or higher than high mark
         // set both HIGH and LOW BG values to red as previous yellow for hig is now not so obvious due to in-range colour of green.
         if lastReading.timeStamp < Date(timeIntervalSinceNow: -60 * 11) {
@@ -2496,6 +2487,14 @@ final class RootViewController: UIViewController, ObservableObject {
         
         // force a snooze status update to see if the current snooze status has changed in the last minutes
         updateSnoozeStatus()
+        
+        // Add predicted glucose value if predictions are enabled - MUST be after all normal labels are set
+        if UserDefaults.standard.showIAPSPredictions {
+            addPredictedGlucoseToLabel(currentReading: lastReading, bgReadings: latestReadings)
+        } else {
+            // Remove prediction label if predictions are disabled
+            view.viewWithTag(9999)?.removeFromSuperview()
+        }
         
         // possibly landscpaeValueViewController is on top now, let's update also the labels in that viewcontroller
         updateLabelsInLandscapeValueViewController()
@@ -4470,6 +4469,126 @@ extension RootViewController {
         navigationController?.pushViewController(helpVC, animated: true)
     }
     */
+    
+    // MARK: - Prediction Display
+    
+    /// Add predicted glucose value as a new label below the chart
+    private func addPredictedGlucoseToLabel(currentReading: BgReading, bgReadings: [BgReading]) {
+        
+        // Get prediction value at user's configured time horizon (convert hours to minutes)
+        let predictionMinutes = Int(UserDefaults.standard.iAPSPredictionHours * 60)
+        
+        // Try to use cached predictions from chart if available and recent
+        var predictionResult: iAPSPredictionManager.PredictionResult? = nil
+        
+        // If no cached predictions, generate new ones
+        if predictionResult == nil {
+            // Get treatment entries for predictions
+            guard let treatmentEntryAccessor = treatmentEntryAccessor,
+                  let coreDataManager = coreDataManager else { return }
+            let endTime = Date()
+            let startTime = endTime.addingTimeInterval(-24 * 3600) // Last 24 hours
+            let treatments = treatmentEntryAccessor.getTreatments(fromDate: startTime, toDate: endTime, on: coreDataManager.mainManagedObjectContext)
+            
+            // Generate predictions using iAPS
+            let iAPSManager = iAPSPredictionManager()
+            predictionResult = iAPSManager.generatePredictions(glucose: Array(bgReadings), treatments: treatments)
+        }
+        
+        guard let predictions = predictionResult else { return }
+        
+        // Get prediction value at desired time
+        // Predictions are in 5-minute intervals, so index = minutes / 5
+        let predictionIndex = predictionMinutes / 5
+        
+        // Use IOB prediction by default (most conservative)
+        var predictedValue: Double? = nil
+        
+        // Check if we have enough prediction points
+        // If not, use the last available prediction
+        if predictionIndex < predictions.iob.count {
+            predictedValue = predictions.iob[predictionIndex]
+        } else if !predictions.iob.isEmpty {
+            // Use the last available prediction if we don't have data that far
+            predictedValue = predictions.iob.last
+            // Log that we're using a shorter prediction
+            trace("Prediction requested for %d minutes but only have %d points (up to %d minutes)", 
+                  log: log, category: ConstantsLog.categoryRootView, type: .info,
+                  predictionMinutes, predictions.iob.count, predictions.iob.count * 5)
+        }
+        
+        // If we have a predicted value, create a new label for it
+        if let predicted = predictedValue {
+            let mgdl = UserDefaults.standard.bloodGlucoseUnitIsMgDl
+            
+            // Convert predicted value to user's unit
+            let predictedInUserUnit = predicted.mgDlToMmol(mgDl: mgdl)
+            let predictedString = predictedInUserUnit.bgValueToString(mgDl: mgdl)
+            
+            // Calculate future time
+            let futureTime = Date().addingTimeInterval(TimeInterval(predictionMinutes * 60))
+            let timeFormatter = DateFormatter()
+            timeFormatter.dateFormat = "HH:mm"
+            let futureTimeString = timeFormatter.string(from: futureTime)
+            
+            // Create prediction text
+            let predictionText = "→\(predictedString) @ \(futureTimeString)"
+            
+            // Remove any existing prediction label
+            view.viewWithTag(9999)?.removeFromSuperview()
+            
+            // Create a new label for the prediction
+            let predictionLabel = UILabel()
+            predictionLabel.tag = 9999 // Tag for easy removal later
+            predictionLabel.text = predictionText
+            predictionLabel.font = UIFont.systemFont(ofSize: 13) // Similar size to "mins ago"
+            predictionLabel.textColor = getPredictionColor(current: currentReading.calculatedValue, predicted: predicted)
+            predictionLabel.textAlignment = .right
+            predictionLabel.translatesAutoresizingMaskIntoConstraints = false
+            
+            // Add the label to the view
+            view.addSubview(predictionLabel)
+            
+            // Position it relative to the chart outlet, aligned with the delta labels
+            NSLayoutConstraint.activate([
+                // Align trailing edge with the diff unit label for consistent right alignment
+                predictionLabel.trailingAnchor.constraint(equalTo: diffLabelUnitOutlet.trailingAnchor),
+                // Position it just above the chart
+                predictionLabel.bottomAnchor.constraint(equalTo: chartOutlet.topAnchor, constant: -5),
+                // Set a minimum width
+                predictionLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 100)
+            ])
+        } else {
+            // Remove prediction label if no prediction available
+            view.viewWithTag(9999)?.removeFromSuperview()
+        }
+    }
+    
+    /// Get color for prediction based on trend
+    private func getPredictionColor(current: Double, predicted: Double) -> UIColor {
+        let mgdl = UserDefaults.standard.bloodGlucoseUnitIsMgDl
+        let highMark = UserDefaults.standard.highMarkValueInUserChosenUnit.mmolToMgdl(mgDl: mgdl)
+        let lowMark = UserDefaults.standard.lowMarkValueInUserChosenUnit.mmolToMgdl(mgDl: mgdl)
+        let targetMark = UserDefaults.standard.targetMarkValueInUserChosenUnit.mmolToMgdl(mgDl: mgdl)
+        
+        // If predicted is moving toward target, show green
+        let currentDistanceFromTarget = abs(current - targetMark)
+        let predictedDistanceFromTarget = abs(predicted - targetMark)
+        
+        if predictedDistanceFromTarget < currentDistanceFromTarget {
+            // Moving toward target - good!
+            return UIColor.systemGreen.withAlphaComponent(0.8)
+        } else if predicted > highMark {
+            // Going high
+            return UIColor.systemOrange.withAlphaComponent(0.8)
+        } else if predicted < lowMark {
+            // Going low
+            return UIColor.systemRed.withAlphaComponent(0.8)
+        } else {
+            // In range but not improving
+            return UIColor.systemGray.withAlphaComponent(0.8)
+        }
+    }
 }
 
 // MARK: - iAPS Algorithm Testing

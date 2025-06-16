@@ -467,23 +467,6 @@ extension UserDefaults {
         /// force StandBy mode to show a big number version of the widget
         case forceStandByBigNumbers = "forceStandByBigNumbers"
         
-        // MARK: - Old Prediction Settings (Deprecated)
-        
-        /// enable glucose prediction on the main chart
-        case predictionEnabled = "predictionEnabled"
-        
-        /// flag to indicate that predictions need to be updated due to treatment changes
-        case predictionsUpdateNeeded = "predictionsUpdateNeeded"
-        
-        /// selected prediction algorithm type
-        case predictionAlgorithmType = "predictionAlgorithmType"
-        
-        /// whether to use automatic algorithm selection based on best fit
-        case predictionAutoSelectAlgorithm = "predictionAutoSelectAlgorithm"
-        
-        /// whether to include treatments (IOB/COB) in predictions
-        case predictionIncludeTreatments = "predictionIncludeTreatments"
-        
         // MARK: - iAPS Prediction Settings
         
         /// show iAPS predictions on main chart
@@ -1307,55 +1290,6 @@ extension UserDefaults {
         
         set {
             set(newValue, forKey: Key.CAGEMaxHours.rawValue)
-        }
-    }
-    
-    
-    /// flag to indicate predictions need update
-    @objc dynamic var predictionsUpdateNeeded: Bool {
-        get {
-            return bool(forKey: Key.predictionsUpdateNeeded.rawValue)
-        }
-        set {
-            set(newValue, forKey: Key.predictionsUpdateNeeded.rawValue)
-        }
-    }
-    
-    /* Commented out - using iAPS predictions now
-    /// selected prediction algorithm type
-    var predictionAlgorithmType: PredictionModelType {
-        get {
-            if let savedType = string(forKey: Key.predictionAlgorithmType.rawValue),
-               let modelType = PredictionModelType(rawValue: savedType) {
-                return modelType
-            }
-            return .polynomial // Default to polynomial
-        }
-        set {
-            set(newValue.rawValue, forKey: Key.predictionAlgorithmType.rawValue)
-        }
-    }
-    */
-    
-    /// whether to use automatic algorithm selection based on best fit
-    @objc dynamic var predictionAutoSelectAlgorithm: Bool {
-        get {
-            // Default to true for automatic selection
-            return object(forKey: Key.predictionAutoSelectAlgorithm.rawValue) as? Bool ?? true
-        }
-        set {
-            set(newValue, forKey: Key.predictionAutoSelectAlgorithm.rawValue)
-        }
-    }
-    
-    /// whether to include treatments (IOB/COB) in predictions
-    @objc dynamic var predictionIncludeTreatments: Bool {
-        get {
-            // Default to true to include treatments
-            return object(forKey: Key.predictionIncludeTreatments.rawValue) as? Bool ?? true
-        }
-        set {
-            set(newValue, forKey: Key.predictionIncludeTreatments.rawValue)
         }
     }
     
