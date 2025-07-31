@@ -16,6 +16,18 @@ fileprivate enum Setting: Int, CaseIterable {
     
     /// the date that the user agreed
     case watchComplicationUserAgreementDate = 1
+    
+    /// enable Libre 2 direct connection to Apple Watch
+    case libre2DirectToWatchEnabled = 2
+    
+    /// priority when both iPhone and Watch are in range
+    case libre2DirectPriority = 3
+    
+    /// connection status info
+    case libre2ConnectionStatus = 4
+    
+    /// button to scan sensor for watch handover
+    case scanForWatchHandover = 5
 }
 
 /// conforms to SettingsViewModelProtocol for all general settings in the first sections screen
@@ -28,6 +40,7 @@ class SettingsViewAppleWatchSettingsViewModel: NSObject, SettingsViewModelProtoc
     private var messageHandler: ((String, String) -> Void)?
     
     var sectionReloadClosure: (() -> Void)?
+    
     
     func storeSectionReloadClosure(sectionReloadClosure: @escaping (() -> Void)) {
         self.sectionReloadClosure = sectionReloadClosure
@@ -53,7 +66,23 @@ class SettingsViewAppleWatchSettingsViewModel: NSObject, SettingsViewModelProtoc
         guard let setting = Setting(rawValue: index) else { fatalError("Unexpected Section") }
         
         switch setting {
-        case .showDataInWatchComplications, .watchComplicationUserAgreementDate:
+        case .showDataInWatchComplications, .watchComplicationUserAgreementDate, .libre2ConnectionStatus, .scanForWatchHandover:
+            return nil
+            
+        case .libre2DirectToWatchEnabled:
+            return UISwitch(isOn: UserDefaults.standard.libre2DirectToWatchEnabled, action: { [weak self] isOn in
+                UserDefaults.standard.libre2DirectToWatchEnabled = isOn
+                
+                // If enabling, post notification to share sensor data with Watch
+                if isOn {
+                    NotificationCenter.default.post(name: .libre2DirectConnectionEnabled, object: nil)
+                }
+                
+                // Reload the section to update the priority row enable state
+                self?.sectionReloadClosure?()
+            })
+            
+        case .libre2DirectPriority:
             return nil
         }
     }
@@ -68,7 +97,16 @@ class SettingsViewAppleWatchSettingsViewModel: NSObject, SettingsViewModelProtoc
     func storeUIViewController(uIViewController: UIViewController) {}
     
     func isEnabled(index: Int) -> Bool {
-        return true
+        guard let setting = Setting(rawValue: index) else { fatalError("Unexpected Section") }
+        
+        switch setting {
+        case .libre2DirectPriority, .scanForWatchHandover:
+            // Only enable priority setting and scan button if direct connection is enabled
+            return UserDefaults.standard.libre2DirectToWatchEnabled
+            
+        default:
+            return true
+        }
     }
     
     func onRowSelect(index: Int) -> SettingsSelectedRowAction {
@@ -90,6 +128,28 @@ class SettingsViewAppleWatchSettingsViewModel: NSObject, SettingsViewModelProtoc
             
         case .watchComplicationUserAgreementDate:
             return .nothing
+            
+        case .libre2DirectToWatchEnabled:
+            return .nothing
+            
+        case .libre2DirectPriority:
+            return .callFunction {
+                // Cycle through the priorities
+                let currentPriority = UserDefaults.standard.libre2DirectPriority
+                let allCases = Libre2DirectPriority.allCases
+                if let currentIndex = allCases.firstIndex(of: currentPriority) {
+                    let nextIndex = (currentIndex + 1) % allCases.count
+                    UserDefaults.standard.libre2DirectPriority = allCases[nextIndex]
+                }
+            }
+            
+        case .libre2ConnectionStatus:
+            return .nothing
+            
+        case .scanForWatchHandover:
+            return .callFunction { [weak self] in
+                self?.handleScanForWatchHandover()
+            }
         }
     }
     
@@ -98,7 +158,7 @@ class SettingsViewAppleWatchSettingsViewModel: NSObject, SettingsViewModelProtoc
     }
     
     func numberOfRows() -> Int {
-        // if the user doesn't enable the complications, then hide the rest of the settings
+        // Show all settings except hide the complication date if complications are disabled
         return Setting.allCases.count - (UserDefaults.standard.showDataInWatchComplications ? 0 : 1)
     }
     
@@ -111,6 +171,18 @@ class SettingsViewAppleWatchSettingsViewModel: NSObject, SettingsViewModelProtoc
             
         case .watchComplicationUserAgreementDate:
             return Texts_SettingsView.appleWatchComplicationUserAgreementDate
+            
+        case .libre2DirectToWatchEnabled:
+            return Texts_SettingsView.libre2DirectToWatchEnabled
+            
+        case .libre2DirectPriority:
+            return Texts_SettingsView.libre2DirectPriority
+            
+        case .libre2ConnectionStatus:
+            return Texts_SettingsView.libre2ConnectionStatus
+            
+        case .scanForWatchHandover:
+            return "Scan Sensor for Watch Handover"
         }
     }
     
@@ -120,8 +192,18 @@ class SettingsViewAppleWatchSettingsViewModel: NSObject, SettingsViewModelProtoc
         switch setting {
         case .showDataInWatchComplications:
             return .disclosureIndicator
-        case .watchComplicationUserAgreementDate:
+            
+        case .watchComplicationUserAgreementDate, .libre2ConnectionStatus:
             return .none
+            
+        case .libre2DirectToWatchEnabled:
+            return .none
+            
+        case .libre2DirectPriority:
+            return .disclosureIndicator
+            
+        case .scanForWatchHandover:
+            return .disclosureIndicator
         }
     }
     
@@ -135,6 +217,38 @@ class SettingsViewAppleWatchSettingsViewModel: NSObject, SettingsViewModelProtoc
             
         case .watchComplicationUserAgreementDate:
             return UserDefaults.standard.watchComplicationUserAgreementDate?.formatted(date: .abbreviated, time: .shortened) ?? "-"
+            
+        case .libre2DirectToWatchEnabled:
+            return UserDefaults.standard.libre2DirectToWatchEnabled ? Texts_Common.enabled : Texts_Common.disabled
+            
+        case .libre2DirectPriority:
+            return UserDefaults.standard.libre2DirectPriority.description
+            
+        case .libre2ConnectionStatus:
+            // For now, just show if the feature is enabled
+            // TODO: Implement actual connection status tracking
+            if UserDefaults.standard.libre2DirectToWatchEnabled {
+                return Texts_SettingsView.libre2DirectEnabledStatus
+            } else {
+                return Texts_SettingsView.libre2DirectDisabledStatus
+            }
+            
+        case .scanForWatchHandover:
+            return "Activate sensor BLE for Watch"
         }
     }
+    
+    // MARK: - Private Methods
+    
+    private func handleScanForWatchHandover() {
+        // Post notification to trigger NFC scan for Watch handover
+        NotificationCenter.default.post(name: .scanLibre2ForWatchHandover, object: nil)
+    }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let libre2DirectConnectionEnabled = Notification.Name("libre2DirectConnectionEnabled")
+    static let scanLibre2ForWatchHandover = Notification.Name("scanLibre2ForWatchHandover")
 }

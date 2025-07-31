@@ -439,6 +439,14 @@ final class WatchStateModel: NSObject, ObservableObject {
             remainingComplicationUserInfoTransfers = dictionary["remainingComplicationUserInfoTransfers"] as? Int ?? 99
             liveDataIsEnabled = dictionary["liveDataIsEnabled"] as? Bool ?? false
             
+            // Process Libre 2 Direct connection settings
+            if let libre2Enabled = dictionary["libre2DirectToWatchEnabled"] as? Bool {
+                UserDefaults.standard.set(libre2Enabled, forKey: "libre2DirectToWatchEnabled")
+            }
+            if let libre2PriorityRaw = dictionary["libre2DirectPriorityRawValue"] as? Int {
+                UserDefaults.standard.set(libre2PriorityRaw, forKey: "libre2DirectPriorityRawValue")
+            }
+            
             if let lastLoopDateAsDouble = dictionary["deviceStatusLastLoopDate"] as? Double {
                 deviceStatusLastLoopDate = Date(timeIntervalSince1970: lastLoopDateAsDouble)
             } else {
@@ -526,6 +534,97 @@ final class WatchStateModel: NSObject, ObservableObject {
         
         return debugString
     }
+    
+    // MARK: - Libre 2 Methods
+    
+    /// Process Libre 2 sensor data received from iPhone
+    private func processLibre2SensorData(_ sensorData: [String: Any]) {
+        print("WatchStateModel: processLibre2SensorData called with data: \(sensorData)")
+        
+        guard let uid = sensorData["uid"] as? String,
+              let patchInfo = sensorData["patchInfo"] as? String,
+              let serialNumber = sensorData["serialNumber"] as? String,
+              let activationDate = sensorData["activationDate"] as? TimeInterval,
+              let unlockCode = sensorData["unlockCode"] as? UInt32 else {
+            print("WatchStateModel: Invalid Libre 2 sensor data received")
+            print("WatchStateModel: uid: \(sensorData["uid"] ?? "nil")")
+            print("WatchStateModel: patchInfo: \(sensorData["patchInfo"] ?? "nil")")
+            print("WatchStateModel: serialNumber: \(sensorData["serialNumber"] ?? "nil")")
+            print("WatchStateModel: activationDate: \(sensorData["activationDate"] ?? "nil")")
+            print("WatchStateModel: unlockCode: \(sensorData["unlockCode"] ?? "nil")")
+            return
+        }
+        
+        // Also sync unlock count if available
+        if let unlockCount = sensorData["unlockCount"] as? Int {
+            UserDefaults.standard.set(unlockCount, forKey: "libre2UnlockCount")
+            print("WatchStateModel: Synced unlock count: \(unlockCount)")
+        }
+        
+        // Set the active sensor start date for proper age calculation
+        let sensorStartDate = Date(timeIntervalSince1970: activationDate)
+        UserDefaults.standard.activeSensorStartDate = sensorStartDate
+        
+        // Calculate and set sensor age in minutes
+        let ageInMinutes = Double(Calendar.current.dateComponents([.minute], from: sensorStartDate, to: Date()).minute ?? 0)
+        
+        // Update UI properties on main thread
+        DispatchQueue.main.async { [weak self] in
+            self?.sensorAgeInMinutes = ageInMinutes
+            self?.activeSensorDescription = "Libre 2 \(serialNumber)"
+        }
+        
+        print("WatchStateModel: Set sensor start date: \(sensorStartDate), age: \(ageInMinutes) minutes")
+        
+        print("WatchStateModel: Valid sensor data - UID: \(uid), Serial: \(serialNumber)")
+        
+        // Verify sensor data integrity - pass the calculated age since it's not set on the property yet
+        verifySensorDataSync(uid: uid, serialNumber: serialNumber, activationDate: sensorStartDate, calculatedAge: ageInMinutes)
+        
+        // Post notification with sensor data
+        NotificationCenter.default.post(
+            name: .libre2SensorDataReceived,
+            object: nil,
+            userInfo: sensorData
+        )
+        
+        print("WatchStateModel: Posted notification for Libre 2 sensor data for sensor: \(serialNumber)")
+    }
+    
+    /// Verify sensor data synchronization integrity
+    private func verifySensorDataSync(uid: String, serialNumber: String, activationDate: Date, calculatedAge: Double) {
+        print("=== Sensor Data Verification ===")
+        print("UID: \(uid)")
+        print("Serial Number: \(serialNumber)")
+        print("Activation Date: \(activationDate)")
+        print("Current Date: \(Date())")
+        print("Time Since Activation: \(Date().timeIntervalSince(activationDate) / 60) minutes")
+        print("Sensor Age: \(calculatedAge) minutes (\(Int(calculatedAge / 1440))d \(Int(calculatedAge.truncatingRemainder(dividingBy: 1440) / 60))h)")
+        print("Days Active: \(String(format: "%.1f", calculatedAge / 1440.0)) days")
+        
+        // Check if sensor age is reasonable (0 to 14.5 days)
+        if calculatedAge < 0 {
+            print("⚠️ WARNING: Sensor age is negative!")
+        } else if calculatedAge == 0 {
+            print("ℹ️ INFO: Sensor age is 0 - just activated")
+        } else if calculatedAge > 20880 { // 14.5 days
+            print("⚠️ WARNING: Sensor age exceeds typical lifetime (\(calculatedAge / 1440.0) days)")
+        } else {
+            print("✅ Sensor age appears valid")
+        }
+        
+        // Verify serial number format
+        if serialNumber.isEmpty {
+            print("⚠️ WARNING: Serial number is empty")
+        } else if serialNumber.count == 10 || serialNumber.count == 11 {
+            // Libre 2: 10 characters, Libre 2 Plus: 11 characters
+            print("✅ Serial number format appears valid (Libre 2\(serialNumber.count == 11 ? " Plus" : ""))")
+        } else {
+            print("⚠️ WARNING: Serial number has unexpected length: \(serialNumber.count)")
+        }
+        
+        print("=== End Verification ===")
+    }
 }
 
 // MARK: - WCSession delegate to handle communications
@@ -533,26 +632,62 @@ final class WatchStateModel: NSObject, ObservableObject {
 extension WatchStateModel: WCSessionDelegate {
     func session(_: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error _: Error?) {
         if activationState == .activated {
+            print("WatchStateModel: WCSession activated")
+            
+            // Check if we have any application context already
+            let context = WCSession.default.receivedApplicationContext
+            print("WatchStateModel: Checking receivedApplicationContext on activation: \(context.keys)")
+            print("WatchStateModel: Context received date unknown, current time: \(Date())")
+            
+            if let sensorData = context["libre2SensorData"] as? [String: Any] {
+                print("WatchStateModel: Found libre2SensorData in existing application context")
+                print("WatchStateModel: Cached sensor data: \(sensorData)")
+                processLibre2SensorData(sensorData)
+            }
+            
             requestWatchStateUpdate()
         }
     }
     
     func sessionReachabilityDidChange(_: WCSession) {}
     
+    func session(_: WCSession, didReceiveApplicationContext applicationContext: [String : Any]) {
+        print("WatchStateModel: didReceiveApplicationContext called with: \(applicationContext.keys)")
+        print("WatchStateModel: Received at: \(Date())")
+        
+        // Handle Libre 2 sensor data from application context
+        if let sensorData = applicationContext["libre2SensorData"] as? [String: Any] {
+            print("WatchStateModel: Found libre2SensorData in application context")
+            print("WatchStateModel: Raw sensor data: \(sensorData)")
+            processLibre2SensorData(sensorData)
+        } else {
+            print("WatchStateModel: No libre2SensorData found in application context")
+        }
+    }
+    
     func session(_: WCSession, didReceiveMessageData _: Data) {}
     
     func session(_: WCSession, didReceiveMessage message: [String: Any]) {
-        let watchStateAsDictionary = message["watchState"] as! [String: Any]
+        print("WatchStateModel: didReceiveMessage called with keys: \(message.keys)")
         
-        DispatchQueue.main.async {
-            self.processWatchStateFromDictionary(dictionary: watchStateAsDictionary)
-            self.requestingDataIconColor = ConstantsAppleWatch.requestingDataIconColorActive
-            
-            // change the requesting icon color back after a small delay to prevent it
-            // flashing on/off too quickly
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.requestingDataIconColor = ConstantsAppleWatch.requestingDataIconColorInactive
+        // Handle watchState messages
+        if let watchStateAsDictionary = message["watchState"] as? [String: Any] {
+            DispatchQueue.main.async {
+                self.processWatchStateFromDictionary(dictionary: watchStateAsDictionary)
+                self.requestingDataIconColor = ConstantsAppleWatch.requestingDataIconColorActive
+                
+                // change the requesting icon color back after a small delay to prevent it
+                // flashing on/off too quickly
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.requestingDataIconColor = ConstantsAppleWatch.requestingDataIconColorInactive
+                }
             }
+        }
+        
+        // Handle Libre 2 sensor data
+        if let sensorData = message["libre2SensorData"] as? [String: Any] {
+            print("WatchStateModel: Found libre2SensorData in message")
+            processLibre2SensorData(sensorData)
         }
     }
     
@@ -563,5 +698,26 @@ extension WatchStateModel: WCSessionDelegate {
             self.processWatchStateFromDictionary(dictionary: watchStateAsDictionary)
         }
 //        }
+    }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let libre2SensorDataReceived = Notification.Name("libre2SensorDataReceived")
+}
+
+// MARK: - UserDefaults Extension
+
+extension UserDefaults {
+    
+    /// Active sensor start date for sensor age calculations
+    @objc dynamic var activeSensorStartDate: Date? {
+        get {
+            return object(forKey: "activeSensorStartDate") as? Date
+        }
+        set {
+            set(newValue, forKey: "activeSensorStartDate")
+        }
     }
 }

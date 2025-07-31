@@ -35,6 +35,9 @@ final class WatchManager: NSObject, ObservableObject {
     /// for logging
     private var log = OSLog(subsystem: ConstantsLog.subSystem, category: ConstantsLog.categoryWatchManager)
     
+    /// reference to BluetoothPeripheralManager for Libre 2 arbitration
+    weak var bluetoothPeripheralManager: BluetoothPeripheralManager?
+    
     // MARK: - intializer
     
     init(coreDataManager: CoreDataManager, nightscoutSyncManager: NightscoutSyncManager, session: WCSession = .default) {
@@ -169,6 +172,10 @@ final class WatchManager: NSObject, ObservableObject {
         
         watchState.remainingComplicationUserInfoTransfers = session.remainingComplicationUserInfoTransfers
         
+        // add Libre 2 Direct connection settings
+        watchState.libre2DirectToWatchEnabled = UserDefaults.standard.libre2DirectToWatchEnabled
+        watchState.libre2DirectPriorityRawValue = UserDefaults.standard.libre2DirectPriority.rawValue
+        
         sendStateToWatch(forceComplicationUpdate: false)
     }
     
@@ -235,7 +242,32 @@ extension WatchManager: WCSessionDelegate {
         session.activate()
     }
     
-    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        if activationState == .activated {
+            trace("WCSession activated on iPhone", log: log, category: ConstantsLog.categoryWatchManager, type: .info)
+            
+            DispatchQueue.main.async {
+                self.sendStateToWatch(forceComplicationUpdate: false)
+                
+                // Also send Libre 2 sensor data if enabled
+                if UserDefaults.standard.libre2DirectToWatchEnabled {
+                    trace("Sending initial Libre 2 sensor data to Watch", log: self.log, category: ConstantsLog.categoryWatchManager, type: .info)
+                    self.shareCurrentLibre2SensorData()
+                }
+                
+                // Send existing application context immediately after activation
+                // This ensures Watch gets data even if it was already activated
+                if let currentContext = session.applicationContext["libre2SensorData"] as? [String: Any] {
+                    trace("Re-sending existing application context", log: self.log, category: ConstantsLog.categoryWatchManager, type: .info)
+                    do {
+                        try session.updateApplicationContext(["libre2SensorData": currentContext])
+                    } catch {
+                        trace("Failed to re-send application context: %{public}@", log: self.log, category: ConstantsLog.categoryWatchManager, type: .error, error.localizedDescription)
+                    }
+                }
+            }
+        }
+    }
     
     // process any received messages from the watch app
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
@@ -245,10 +277,25 @@ extension WatchManager: WCSessionDelegate {
             case "watchState":
                 DispatchQueue.main.async {
                     self.sendStateToWatch(forceComplicationUpdate: false)
+                    
+                    // Also send Libre 2 sensor data if enabled
+                    if UserDefaults.standard.libre2DirectToWatchEnabled {
+                        self.shareCurrentLibre2SensorData()
+                    }
                 }
             default:
                 break
             }
+        }
+        
+        // Handle Libre 2 arbitration messages
+        if let arbitrationMessage = message["arbitration"] as? String {
+            handleLibre2ArbitrationMessage(arbitrationMessage)
+        }
+        
+        // Handle glucose data from Watch
+        if message["watchGlucose"] != nil {
+            processWatchGlucoseData(message)
         }
     }
     
@@ -260,6 +307,11 @@ extension WatchManager: WCSessionDelegate {
         if session.isReachable {
             DispatchQueue.main.async {
                 self.sendStateToWatch(forceComplicationUpdate: false)
+                
+                // Also send Libre 2 sensor data if enabled
+                if UserDefaults.standard.libre2DirectToWatchEnabled {
+                    self.shareCurrentLibre2SensorData()
+                }
             }
         }
     }

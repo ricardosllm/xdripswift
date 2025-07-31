@@ -40,11 +40,21 @@ fileprivate enum Setting:Int, CaseIterable {
     /// force StandBy mode to show a big number version of the widget
     case forceStandByBigNumbers = 11
     
+    /// Show Libre 2 sensor data and manual sync
+    case libre2SensorData = 12
+    
 }
 
 class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProtocol {
     
     var sectionReloadClosure: (() -> Void)?
+    
+    var messageHandler: ((String, String) -> Void)?
+    
+    override init() {
+        super.init()
+        addObservers()
+    }
     
     func storeSectionReloadClosure(sectionReloadClosure: @escaping (() -> Void)) {
         self.sectionReloadClosure = sectionReloadClosure
@@ -54,8 +64,9 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
     
     func storeUIViewController(uIViewController: UIViewController) {}
     
-    func storeMessageHandler(messageHandler: ((String, String) -> Void)) {
+    func storeMessageHandler(messageHandler: @escaping ((String, String) -> Void)) {
         // this ViewModel does need to send back messages to the viewcontroller asynchronously
+        self.messageHandler = messageHandler
     }
 
     func sectionTitle() -> String? {
@@ -103,6 +114,9 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
             
         case .forceStandByBigNumbers:
             return Texts_SettingsView.forceStandByBigNumbers
+            
+        case .libre2SensorData:
+            return "Libre 2 Sensor Data"
         }
     }
     
@@ -115,7 +129,7 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
         case .showDeveloperSettings, .NSLogEnabled, .OSLogEnabled, .suppressUnLockPayLoad, .shareToLoopOnceEvery5Minutes, .allowStandByHighContrast, .forceStandByBigNumbers:
             return .none
             
-        case .loopShareType, .loopDelay, .libreLinkUpVersion, .remainingComplicationUserInfoTransfers, .CAGEMaxHours:
+        case .loopShareType, .loopDelay, .libreLinkUpVersion, .remainingComplicationUserInfoTransfers, .CAGEMaxHours, .libre2SensorData:
             return .disclosureIndicator
             
         }
@@ -145,6 +159,13 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
             
         case .CAGEMaxHours:
             return "\(UserDefaults.standard.CAGEMaxHours.description) \(Texts_Common.hours)"
+            
+        case .libre2SensorData:
+            if UserDefaults.standard.libreSensorUID != nil {
+                return "Tap to view"
+            } else {
+                return "No sensor data"
+            }
         }
         
     }
@@ -220,7 +241,7 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
                 
             })
             
-        case .loopShareType, .loopDelay, .remainingComplicationUserInfoTransfers, .libreLinkUpVersion, .CAGEMaxHours:
+        case .loopShareType, .loopDelay, .remainingComplicationUserInfoTransfers, .libreLinkUpVersion, .CAGEMaxHours, .libre2SensorData:
             return nil
             
         }
@@ -306,6 +327,52 @@ class SettingsViewDevelopmentSettingsViewModel: NSObject, SettingsViewModelProto
                     }
                 }
             }, cancelHandler: nil, inputValidator: nil)
+            
+        case .libre2SensorData:
+            // Show sensor data details
+            var message = "Libre 2 Sensor Data:\n\n"
+            
+            if let sensorUID = UserDefaults.standard.libreSensorUID {
+                message += "Sensor UID: \(sensorUID.hexEncodedString())\n"
+            } else {
+                message += "Sensor UID: Not available\n"
+            }
+            
+            if let patchInfo = UserDefaults.standard.librePatchInfo {
+                message += "Patch Info: \(patchInfo.hexEncodedString())\n"
+                
+                // Try to get serial number
+                let sensorSerialNumber = LibreSensorSerialNumber(withUID: UserDefaults.standard.libreSensorUID ?? Data(), with: LibreSensorType.type(patchInfo: patchInfo.toHexString()))?.serialNumber ?? "Unknown"
+                message += "Serial Number: \(sensorSerialNumber)\n"
+            } else {
+                message += "Patch Info: Not available\n"
+            }
+            
+            message += "Unlock Code: \(UserDefaults.standard.libreActiveSensorUnlockCount)\n"
+            
+            if let startDate = UserDefaults.standard.activeSensorStartDate {
+                message += "Activation Date: \(startDate.description(with: .current))\n"
+            } else {
+                message += "Activation Date: Not available\n"
+            }
+            
+            message += "\nLibre 2 Direct to Watch: \(UserDefaults.standard.libre2DirectToWatchEnabled ? "Enabled" : "Disabled")"
+            
+            // Create action to manually send data to watch
+            return .askConfirmation(
+                title: "Libre 2 Sensor Data",
+                message: message,
+                actionHandler: {
+                    // Post notification to trigger sensor data sharing
+                    NotificationCenter.default.post(name: .libre2DirectConnectionEnabled, object: nil)
+                    
+                    // Show confirmation
+                    if let messageHandler = self.messageHandler {
+                        messageHandler("Libre 2 Data", "Sensor data sent to Apple Watch")
+                    }
+                },
+                cancelHandler: nil
+            )
         }
     }
     

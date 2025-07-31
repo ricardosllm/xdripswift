@@ -198,6 +198,169 @@ class BluetoothPeripheralManager: NSObject {
         }
         
     }
+    
+    /// Get the currently connected Libre 2 sensor if any
+    public func getConnectedLibre2() -> Libre2? {
+        for (index, bluetoothPeripheral) in bluetoothPeripherals.enumerated() {
+            if let libre2 = bluetoothPeripheral as? Libre2,
+               index < bluetoothTransmitters.count,
+               bluetoothTransmitters[index] is CGMLibre2Transmitter {
+                return libre2
+            }
+        }
+        return nil
+    }
+    
+    /// Check if iPhone is connected to a Libre 2 sensor
+    public func isConnectedToLibre2() -> Bool {
+        return getConnectedLibre2() != nil
+    }
+    
+    /// Request Libre 2 disconnection for Watch handover
+    public func requestLibre2DisconnectForWatch() {
+        // Find and disconnect the Libre 2 transmitter
+        for (index, bluetoothPeripheral) in bluetoothPeripherals.enumerated() {
+            if bluetoothPeripheral is Libre2,
+               index < bluetoothTransmitters.count,
+               let transmitter = bluetoothTransmitters[index] as? CGMLibre2Transmitter {
+                trace("Disconnecting Libre 2 for Watch handover", log: log, category: ConstantsLog.categoryBluetoothPeripheralManager, type: .info)
+                transmitter.disconnect()
+                break
+            }
+        }
+    }
+    
+    /// Scan for Libre 2 sensor with NFC for Watch handover
+    public func scanForLibre2ForWatchHandover() {
+        // Find the Libre 2 transmitter and trigger NFC scan
+        for (index, bluetoothPeripheral) in bluetoothPeripherals.enumerated() {
+            if bluetoothPeripheral is Libre2,
+               index < bluetoothTransmitters.count,
+               let transmitter = bluetoothTransmitters[index] as? CGMLibre2Transmitter {
+                
+                // Disconnect iPhone first
+                trace("Disconnecting iPhone from Libre 2 for Watch handover", log: log, category: ConstantsLog.categoryBluetoothPeripheralManager, type: .info)
+                
+                // IMPORTANT: Set shouldconnect to false to prevent automatic reconnection
+                bluetoothPeripheral.blePeripheral.shouldconnect = false
+                coreDataManager.saveChanges()
+                
+                // Force disconnect and clear peripheral reference
+                transmitter.disconnect()
+                
+                // Wait for disconnect to complete
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+                    // Verify disconnection
+                    if let connectionStatus = transmitter.getConnectionStatus() {
+                        trace("Connection status after disconnect: %{public}@", log: self?.log ?? OSLog(subsystem: "", category: ""), category: ConstantsLog.categoryBluetoothPeripheralManager, type: .info, String(connectionStatus.rawValue))
+                        
+                        if connectionStatus != .disconnected {
+                            trace("WARNING: iPhone still connected to Libre 2!", log: self?.log ?? OSLog(subsystem: "", category: ""), category: ConstantsLog.categoryBluetoothPeripheralManager, type: .error)
+                        }
+                    }
+                    
+                    // Post notification that disconnection is complete
+                    NotificationCenter.default.post(name: Notification.Name("libre2iPhoneDisconnectedForHandover"), object: nil)
+                    
+                    // Post notification that NFC scan is starting
+                    NotificationCenter.default.post(name: Notification.Name("libre2NFCScanStarted"), object: nil)
+                    
+                    // Start NFC scan to activate BLE
+                    trace("Starting NFC scan for Watch handover", log: self?.log ?? OSLog(subsystem: "", category: ""), category: ConstantsLog.categoryBluetoothPeripheralManager, type: .info)
+                    
+                    // Reset UserDefaults flags before starting scan
+                    UserDefaults.standard.nfcScanSuccessful = false
+                    UserDefaults.standard.nfcScanFailed = false
+                    
+                    _ = transmitter.startScanning()
+                    
+                    // Set up observers for NFC scan result
+                    var nfcSuccessObserver: NSObjectProtocol?
+                    var nfcFailureObserver: NSObjectProtocol?
+                    
+                    // Function to clean up observers
+                    let removeObservers = {
+                        if let observer = nfcSuccessObserver {
+                            NotificationCenter.default.removeObserver(observer)
+                        }
+                        if let observer = nfcFailureObserver {
+                            NotificationCenter.default.removeObserver(observer)
+                        }
+                    }
+                    
+                    // Observe NFC scan success
+                    nfcSuccessObserver = NotificationCenter.default.addObserver(
+                        forName: UserDefaults.didChangeNotification,
+                        object: nil,
+                        queue: .main
+                    ) { [weak self] _ in
+                        if UserDefaults.standard.nfcScanSuccessful {
+                            trace("NFC scan successful, proceeding with handover", log: self?.log ?? OSLog(subsystem: "", category: ""), category: ConstantsLog.categoryBluetoothPeripheralManager, type: .info)
+                            
+                            removeObservers()
+                            
+                            // CRITICAL: Send fresh sensor data to Watch before it starts scanning!
+                            // The NFC scan provides fresh sensor data including potentially rotated security keys
+                            trace("NFC scan completed, posting notification to send sensor data to Watch", log: self?.log ?? OSLog(subsystem: "", category: ""), category: ConstantsLog.categoryBluetoothPeripheralManager, type: .info)
+                            
+                            // Post notification to trigger sensor data sharing with Watch
+                            NotificationCenter.default.post(
+                                name: Notification.Name("libre2ShouldShareSensorDataWithWatch"),
+                                object: nil
+                            )
+                            
+                            // Give Watch time to receive and process the sensor data
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                NotificationCenter.default.post(
+                                    name: Notification.Name("libre2NFCScanCompleted"),
+                                    object: nil,
+                                    userInfo: ["success": true, "activationTime": Date()]
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Observe NFC scan failure
+                    nfcFailureObserver = NotificationCenter.default.addObserver(
+                        forName: UserDefaults.didChangeNotification,
+                        object: nil,
+                        queue: .main
+                    ) { [weak self] _ in
+                        if UserDefaults.standard.nfcScanFailed {
+                            trace("NFC scan failed, cancelling handover", log: self?.log ?? OSLog(subsystem: "", category: ""), category: ConstantsLog.categoryBluetoothPeripheralManager, type: .error)
+                            
+                            removeObservers()
+                            
+                            // Post notification that NFC scan failed
+                            NotificationCenter.default.post(
+                                name: Notification.Name("libre2NFCScanCompleted"),
+                                object: nil,
+                                userInfo: ["success": false, "error": "NFC scan failed"]
+                            )
+                        }
+                    }
+                    
+                    // Set timeout for NFC scan (30 seconds)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 30.0) {
+                        // Check if neither success nor failure was detected
+                        if !UserDefaults.standard.nfcScanSuccessful && !UserDefaults.standard.nfcScanFailed {
+                            trace("NFC scan timeout, cancelling handover", log: self?.log ?? OSLog(subsystem: "", category: ""), category: ConstantsLog.categoryBluetoothPeripheralManager, type: .error)
+                            
+                            removeObservers()
+                            
+                            // Post notification that NFC scan timed out
+                            NotificationCenter.default.post(
+                                name: Notification.Name("libre2NFCScanCompleted"),
+                                object: nil,
+                                userInfo: ["success": false, "error": "NFC scan timeout"]
+                            )
+                        }
+                    }
+                }
+                break
+            }
+        }
+    }
 
     /// returns the bluetoothTransmitter for the bluetoothPeripheral
     /// - parameters:

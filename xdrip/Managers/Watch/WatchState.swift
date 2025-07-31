@@ -40,6 +40,10 @@ struct WatchState: Codable {
     var deviceStatusIOB: Double?
     var deviceStatusCOB: Double?
     
+    // Libre 2 Direct Connection settings
+    var libre2DirectToWatchEnabled: Bool?
+    var libre2DirectPriorityRawValue: Int?
+    
     var asDictionary: [String: Any]? {
         guard let data = try? JSONEncoder().encode(self) else { return nil }
         return (try? JSONSerialization.jsonObject(with: data, options: .allowFragments)).flatMap { $0 as? [String: Any] }

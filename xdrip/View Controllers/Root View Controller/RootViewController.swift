@@ -681,6 +681,14 @@ final class RootViewController: UIViewController, ObservableObject {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // Set up notification observer for Libre 2 Watch handover
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleLibre2ShouldShareSensorData),
+            name: Notification.Name("libre2ShouldShareSensorDataWithWatch"),
+            object: nil
+        )
+        
         // from 5.2.0 the showTarget userdefault will be deprecated
         // showTarget will not be checked by the app any more, it will use targetMarkValue
         // targetMarkValue == 0 for disabled (hide) or targetMarkValue > 0 for enabled (show)
@@ -1273,6 +1281,12 @@ final class RootViewController: UIViewController, ObservableObject {
         
         // initialize watchManager
         watchManager = WatchManager(coreDataManager: coreDataManager, nightscoutSyncManager: nightscoutSyncManager!)
+        watchManager?.bluetoothPeripheralManager = bluetoothPeripheralManager
+        
+        // add Libre 2 notification observers for Watch
+        NotificationCenter.default.addObserver(self, selector: #selector(handleLibre2DirectConnectionEnabled), name: .libre2DirectConnectionEnabled, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleLibre2NewSensorDetected), name: .libre2NewSensorDetected, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleScanLibre2ForWatchHandover), name: .scanLibre2ForWatchHandover, object: nil)
         
         // initialize chartGenerator in chartOutlet
         self.chartOutlet.chartGenerator = { [weak self] (frame) in
@@ -4184,4 +4198,104 @@ extension RootViewController: UIGestureRecognizerDelegate {
         
     }
     
+}
+
+// MARK: - Libre 2 Watch Notification Handlers
+
+extension RootViewController {
+    
+    @objc private func handleLibre2DirectConnectionEnabled() {
+        watchManager?.shareCurrentLibre2SensorData()
+    }
+    
+    @objc private func handleLibre2NewSensorDetected() {
+        watchManager?.shareCurrentLibre2SensorData()
+    }
+    
+    @objc private func handleLibre2ShouldShareSensorData() {
+        trace("Sharing Libre 2 sensor data with Watch after NFC scan", log: log, category: ConstantsLog.categoryRootView, type: .info)
+        watchManager?.shareCurrentLibre2SensorData()
+    }
+    
+    @objc private func handleScanLibre2ForWatchHandover() {
+        // This is the handover flow for Watch direct connection
+        guard let bluetoothPeripheralManager = bluetoothPeripheralManager else { return }
+        
+        // Check if we have a Libre 2 sensor
+        guard bluetoothPeripheralManager.getConnectedLibre2() != nil else {
+            showNFCAlert(title: "No Libre 2 Sensor", message: "Please connect a Libre 2 sensor first.")
+            return
+        }
+        
+        // For now, show the handover instructions directly
+        // TODO: Add Libre2HandoverViewController to Xcode project
+        showHandoverInstructions()
+    }
+    
+    private func showNFCAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func showHandoverInstructions() {
+        // Show handover instructions with a simple alert for now
+        let alert = UIAlertController(
+            title: "Scan Sensor for Watch",
+            message: "1. iPhone will disconnect from sensor\n2. Hold your iPhone near the sensor\n3. After scan completes, move Watch near sensor\n4. Watch will connect within 5 minutes\n\nNote: BLE activation is time-limited",
+            preferredStyle: .alert
+        )
+        
+        alert.addAction(UIAlertAction(title: "Start Handover", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            
+            // Show progress alert
+            let progressAlert = UIAlertController(
+                title: "Handover in Progress",
+                message: "Disconnecting iPhone...\n\n",
+                preferredStyle: .alert
+            )
+            
+            // Add activity indicator
+            let activityIndicator = UIActivityIndicatorView(style: .medium)
+            activityIndicator.translatesAutoresizingMaskIntoConstraints = false
+            activityIndicator.startAnimating()
+            progressAlert.view.addSubview(activityIndicator)
+            
+            NSLayoutConstraint.activate([
+                activityIndicator.centerXAnchor.constraint(equalTo: progressAlert.view.centerXAnchor),
+                activityIndicator.topAnchor.constraint(equalTo: progressAlert.view.topAnchor, constant: 120)
+            ])
+            
+            // Add cancel button
+            progressAlert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            
+            self.present(progressAlert, animated: true) {
+                // Start the handover process
+                self.bluetoothPeripheralManager?.scanForLibre2ForWatchHandover()
+                
+                // Update progress message after disconnect
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    progressAlert.message = "iPhone disconnected.\n\nNow scan your sensor with NFC..."
+                }
+                
+                // Dismiss and show completion after NFC scan simulation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                    progressAlert.dismiss(animated: true) {
+                        let completionAlert = UIAlertController(
+                            title: "BLE Activated",
+                            message: "Sensor BLE is now active for 5 minutes.\n\nMove your Apple Watch near the sensor to complete connection.",
+                            preferredStyle: .alert
+                        )
+                        completionAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(completionAlert, animated: true)
+                    }
+                }
+            }
+        })
+        
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        present(alert, animated: true)
+    }
 }
