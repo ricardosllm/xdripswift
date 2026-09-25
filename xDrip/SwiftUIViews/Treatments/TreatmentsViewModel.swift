@@ -173,7 +173,7 @@ import OSLog
             treatmentEntry.treatmentType.asString(),
             treatmentEntry.date.description
         )
-        setNightscoutSyncRequiredToTrue()
+        UserDefaults.standard.requestNightscoutTreatmentSync()
         reloadTreatments()
     }
 
@@ -233,16 +233,6 @@ import OSLog
         dateFormatter.dateFormat = "EEEE"
 
         selectedDateDayName = dateFormatter.string(from: selectedDate).capitalized
-    }
-
-    private func setNightscoutSyncRequiredToTrue() {
-        let latestSyncRequestDate = UserDefaults.standard.timeStampLatestNightscoutSyncRequest ?? Date.distantPast
-
-        if latestSyncRequestDate.timeIntervalSinceNow <
-            -ConstantsNightscout.minimiumTimeBetweenTwoTreatmentSyncsInSeconds {
-            UserDefaults.standard.timeStampLatestNightscoutSyncRequest = .now
-            UserDefaults.standard.nightscoutSyncRequired = true
-        }
     }
 }
 

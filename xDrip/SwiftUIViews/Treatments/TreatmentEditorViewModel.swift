@@ -257,7 +257,7 @@ import OSLog
                     selectedType.asString(),
                     selectedDate.description
                 )
-                setNightscoutSyncRequiredToTrue()
+                UserDefaults.standard.requestNightscoutTreatmentSync()
             }
         } else {
             _ = TreatmentEntry(
@@ -287,7 +287,7 @@ import OSLog
                 selectedType.asString(),
                 selectedDate.description
             )
-            setNightscoutSyncRequiredToTrue()
+            UserDefaults.standard.requestNightscoutTreatmentSync()
         }
 
         // Only a successful explicit save updates the next draft. Cancel and failed saves must
@@ -325,7 +325,7 @@ import OSLog
             treatmentToEdit.treatmentType.asString(),
             treatmentToEdit.date.description
         )
-        setNightscoutSyncRequiredToTrue()
+        UserDefaults.standard.requestNightscoutTreatmentSync()
 
         return true
     }
@@ -420,16 +420,6 @@ import OSLog
         }
 
         return originalTreatment
-    }
-
-    private func setNightscoutSyncRequiredToTrue() {
-        let latestSyncRequestDate = UserDefaults.standard.timeStampLatestNightscoutSyncRequest ?? Date.distantPast
-
-        if latestSyncRequestDate.timeIntervalSinceNow <
-            -ConstantsNightscout.minimiumTimeBetweenTwoTreatmentSyncsInSeconds {
-            UserDefaults.standard.timeStampLatestNightscoutSyncRequest = .now
-            UserDefaults.standard.nightscoutSyncRequired = true
-        }
     }
 }
 

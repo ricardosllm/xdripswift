@@ -108,11 +108,17 @@ enum BolusAmount: String, AppEnum {
     var units: Double {
         Double(rawValue) ?? 0
     }
+
+    /// The listed amount for a number Siri heard, or nil when it is off the half-unit grid or above 20 U.
+    init?(units: Double) {
+        guard let amount = Self.allCases.first(where: { $0.units == units }) else { return nil }
+        self = amount
+    }
 }
 
 /// Logs a bolus spoken to Siri, such as "Log 1.5 bolus in xDrip", after reading the amount back.
 ///
-/// Siri asks for the amount when the phrase has none. The saved treatment is the same insulin entry
+/// When the phrase has no amount, Siri asks for a number rather than the list, which it would read aloud in full. The saved treatment is the same insulin entry
 /// the treatment editor creates, so IOB, the Home chart and Nightscout treat it identically.
 struct LogBolusIntent: AppIntent {
     static var title: LocalizedStringResource = "Log Bolus"
@@ -122,8 +128,13 @@ struct LogBolusIntent: AppIntent {
     /// The policy must be a build-time constant, so the user's lock preference is enforced in perform().
     static var authenticationPolicy = IntentAuthenticationPolicy.alwaysAllowed
 
-    @Parameter(title: "Amount", requestValueDialog: "How many units?")
-    var amount: BolusAmount
+    /// Filled by one-shot phrases such as "Log 2 bolus in xDrip".
+    @Parameter(title: "Amount")
+    var amount: BolusAmount?
+
+    /// Asked for only when the phrase had no amount.
+    @Parameter(title: "Units", requestValueDialog: "How many units?")
+    var spokenUnits: Double?
 
     private static let log = OSLog(subsystem: ConstantsLog.subSystem, category: ConstantsLog.categoryApplicationDataTreatments)
 
@@ -134,6 +145,8 @@ struct LogBolusIntent: AppIntent {
             throw IntentError.message("Unlock your iPhone to log a bolus.")
         }
 
+        let amount = try await resolvedAmount()
+
         // A misheard amount must never be stored silently: Siri reads the matched value back first.
         guard try await $amount.requestConfirmation(for: amount, dialog: "Log \(amount.rawValue) units of bolus insulin?") else {
             return .result(dialog: "OK, no bolus logged.")
@@ -143,6 +156,24 @@ struct LogBolusIntent: AppIntent {
         try Self.recordBolus(amount, at: Date(), coreDataManager: coreDataManager)
 
         return .result(dialog: "Logged \(amount.rawValue) units of bolus insulin.")
+    }
+
+    private func resolvedAmount() async throws -> BolusAmount {
+        if let amount {
+            return amount
+        }
+
+        let units: Double
+        if let spokenUnits {
+            units = spokenUnits
+        } else {
+            units = try await $spokenUnits.requestValue()
+        }
+
+        guard let amount = BolusAmount(units: units) else {
+            throw IntentError.message("Siri can log a bolus from 0.5 to 20 units, in half-unit steps.")
+        }
+        return amount
     }
 
     /// A locked phone only records a bolus when the user has explicitly allowed it.
@@ -162,7 +193,9 @@ struct LogBolusIntent: AppIntent {
             nsManagedObjectContext: coreDataManager.mainManagedObjectContext
         )
 
-        guard coreDataManager.saveChanges() else {
+        // Siri may launch the app in the background and suspend it right after perform() returns,
+        // so the bolus must reach the store before the intent reports success.
+        guard coreDataManager.saveChangesSynchronously() else {
             // Otherwise the next successful save anywhere in the app would store a bolus Siri reported as failed.
             coreDataManager.mainManagedObjectContext.delete(treatment)
             trace("failed to save a Siri bolus", log: log, category: ConstantsLog.categoryApplicationDataTreatments, type: .error)
@@ -183,19 +216,9 @@ struct LogBolusIntent: AppIntent {
             date.description
         )
 
-        requestNightscoutSync()
+        UserDefaults.standard.requestNightscoutTreatmentSync()
 
         // The Home chart reloads on this counter, so an open app shows the bolus without waiting for a reading.
         UserDefaults.standard.nightscoutTreatmentsUpdateCounter += 1
-    }
-
-    /// Same throttle as the treatment editor; an unsent entry is still picked up by the next sync.
-    private static func requestNightscoutSync() {
-        let latestSyncRequestDate = UserDefaults.standard.timeStampLatestNightscoutSyncRequest ?? Date.distantPast
-
-        if latestSyncRequestDate.timeIntervalSinceNow < -ConstantsNightscout.minimiumTimeBetweenTwoTreatmentSyncsInSeconds {
-            UserDefaults.standard.timeStampLatestNightscoutSyncRequest = .now
-            UserDefaults.standard.nightscoutSyncRequired = true
-        }
     }
 }

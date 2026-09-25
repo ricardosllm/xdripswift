@@ -16,6 +16,15 @@ final class LogBolusIntentTests: XCTestCase {
         XCTAssertEqual(units, stride(from: 0.5, through: 20, by: 0.5).map { $0 })
     }
 
+    /// A number spoken at Siri's follow-up question must still land on the half-unit list, or be refused.
+    func testSpokenUnitsMapOnlyToListedAmounts() {
+        XCTAssertEqual(BolusAmount(units: 1.5), .units1_5)
+        XCTAssertEqual(BolusAmount(units: 20), .units20)
+        for invalid in [0, 1.3, 20.5, -1] {
+            XCTAssertNil(BolusAmount(units: invalid), "\(invalid) must not be logged")
+        }
+    }
+
     /// A Siri bolus is the same record as one added in the treatment editor, queued for Nightscout.
     @MainActor func testRecordedBolusIsAnInsulinTreatmentAwaitingUpload() throws {
         try withRestoredDefaults {
@@ -81,7 +90,7 @@ final class LogBolusIntentTests: XCTestCase {
 
     @MainActor private func withRestoredDefaults(_ body: () throws -> Void) rethrows {
         let defaults = UserDefaults.standard
-        let keys = ["timeStampLatestNightscoutSyncRequest", "nightscoutSyncRequired", "nightscoutTreatmentsUpdateCounter", "allowSiriBolusWhenLocked"]
+        let keys = [UserDefaults.Key.timeStampLatestNightscoutSyncRequest, .nightscoutSyncRequired, .nightscoutTreatmentsUpdateCounter, .allowSiriBolusWhenLocked].map(\.rawValue)
         let previous = keys.map { defaults.object(forKey: $0) }
         defer {
             for (key, value) in zip(keys, previous) {

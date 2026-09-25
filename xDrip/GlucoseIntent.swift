@@ -18,7 +18,7 @@ struct GlucoseIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some ReturnsValue<Double> & ProvidesDialog & ShowsSnippetView {
-        let coreDataManager = await CoreDataManager.create(for: ConstantsCoreData.modelName)
+        let coreDataManager = await IntentCoreData.sharedManager()
         let bgReadingsAccessor = BgReadingsAccessor(coreDataManager: coreDataManager)
         
         let bgReadings = bgReadingsAccessor.getLatestBgReadings(limit: nil, fromDate: Date(timeIntervalSinceNow: -14400), forSensor: nil, ignoreRawData: true, ignoreCalculatedValue: false).sorted { $0.timeStamp < $1.timeStamp }
@@ -80,18 +80,6 @@ struct GlucoseIntent: AppIntent {
                 highContrast: nil
             )
         )
-    }
-}
-
-extension CoreDataManager {
-    static func create(for modelName: String) async -> CoreDataManager {
-        await withCheckedContinuation { continuation in
-            // Suspend the intent until the store is ready without blocking the main actor that
-            // receives CoreDataManager's completion callback.
-            _ = CoreDataManager(modelName: modelName) { manager in
-                continuation.resume(returning: manager)
-            }
-        }
     }
 }
 

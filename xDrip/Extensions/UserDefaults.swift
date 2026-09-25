@@ -2130,6 +2130,18 @@ extension UserDefaults {
         }
     }
 
+    /// Requests a treatment sync after a local treatment change, at most once per
+    /// ConstantsNightscout.minimiumTimeBetweenTwoTreatmentSyncsInSeconds. A change inside that window
+    /// is still uploaded because the pending sync picks up every entry that is not yet uploaded.
+    func requestNightscoutTreatmentSync() {
+        let latestSyncRequestDate = timeStampLatestNightscoutSyncRequest ?? Date.distantPast
+
+        if latestSyncRequestDate.timeIntervalSinceNow < -ConstantsNightscout.minimiumTimeBetweenTwoTreatmentSyncsInSeconds {
+            timeStampLatestNightscoutSyncRequest = .now
+            nightscoutSyncRequired = true
+        }
+    }
+
     /// timestamp lastest reading uploaded to Nightscout
     var timeStampLatestNightscoutSyncRequest: Date? {
         get {
