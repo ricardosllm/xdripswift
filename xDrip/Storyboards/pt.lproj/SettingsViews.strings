@@ -523,6 +523,8 @@
 "therapy.carbNormal" = "Absorção normal de hidratos de carbono. Inclui um atraso de 10 minutos antes do início.";
 "therapy.carbLong" = "Absorção mais prolongada de hidratos de carbono. Pode ser útil quando a medicação GLP-1 abranda a digestão. Inclui um atraso de 10 minutos antes do início.";
 "therapy.automatic" = "Automático";
+"therapy.siriBolusWhenLocked" = "Bólus Siri bloqueado";
+"therapy.siriBolusFooter" = "A ação da Siri \"Log Bolus\" regista insulina em bólus em passos de 0,5 U até 20 U e lê a quantidade antes de guardar. Se estiver desativado, o iPhone tem de estar desbloqueado.";
 
 "therapy.liveActivityMetricsFooter" = "Mostrar os valores IOB e COB disponíveis no esquema grande do ecrã bloqueado e no esquema com gráfico do CarPlay/Pilha inteligente.";
 

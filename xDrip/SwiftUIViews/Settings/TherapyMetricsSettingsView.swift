@@ -22,14 +22,14 @@ struct TreatmentSettingsView: View {
 }
 
 struct TreatmentSettingsViewModel: SettingsNativeSectionProvider {
-    enum Group { case insulin, carbs }
+    enum Group { case insulin, carbs, siriBolus }
     let group: Group
     var policyProvider: () -> DataFlowPolicy = { UserDefaults.standard.dataFlowPolicy }
 
     static var screen: SettingsScreen {
         SettingsScreen(title: TherapyTexts.text("treatmentSettings"),
                        introduction: { TreatmentSettingsViewModel(group: .insulin).introduction }, onlineHelpTopic: .treatments,
-                       providers: { [.insulin, .carbs].map { TreatmentSettingsViewModel(group: $0) } })
+                       providers: { [.insulin, .carbs, .siriBolus].map { TreatmentSettingsViewModel(group: $0) } })
     }
 
     private var policy: DataFlowPolicy { policyProvider() }
@@ -44,6 +44,11 @@ struct TreatmentSettingsViewModel: SettingsNativeSectionProvider {
     }
 
     func settingsRows(sectionID: Int) -> [SettingsRow] {
+        if group == .siriBolus {
+            return [SettingsRow(id: "treatments.siriBolusWhenLocked", title: TherapyTexts.text("siriBolusWhenLocked"),
+                control: .toggle(isOn: { UserDefaults.standard.allowSiriBolusWhenLocked },
+                                 setIsOn: { UserDefaults.standard.allowSiriBolusWhenLocked = $0 }))]
+        }
         let isInsulin = group == .insulin
         if (isInsulin ? policy.externalIOBSource : policy.externalCOBSource) != nil {
             return [SettingsRow(id: isInsulin ? "treatments.insulinType" : "treatments.carbDuration",
@@ -102,6 +107,8 @@ struct TreatmentSettingsViewModel: SettingsNativeSectionProvider {
             guard policy.externalCOBSource == nil else { return nil }
             let key = settings.carbDuration <= 180 ? "carbFast" : settings.carbDuration <= 360 ? "carbNormal" : "carbLong"
             return TherapyTexts.text(key)
+        case .siriBolus:
+            return TherapyTexts.text("siriBolusFooter")
         }
     }
     private func row(at index: Int) -> SettingsRow? {

@@ -763,6 +763,8 @@
 "therapy.carbNormal" = "Običajna absorpcija ogljikovih hidratov. Vključuje 10-minutni zamik pred začetkom.";
 "therapy.carbLong" = "Daljša absorpcija ogljikovih hidratov. Lahko je koristna, ko zdravila GLP-1 upočasnijo prebavo. Vključuje 10-minutni zamik pred začetkom.";
 "therapy.automatic" = "Samodejno";
+"therapy.siriBolusWhenLocked" = "Bolus Siri pri zaklepu";
+"therapy.siriBolusFooter" = "Dejanje Siri \"Log Bolus\" zabeleži bolusni inzulin v korakih po 0,5 E do 20 E in pred shranjevanjem prebere količino. Ko je to izklopljeno, mora biti iPhone odklenjen.";
 
 "therapy.liveActivityMetricsFooter" = "Prikaži razpoložljiva IOB in COB v veliki postavitvi zaklenjenega zaslona ter postavitvi z grafom CarPlay/Pametni sklad.";
 

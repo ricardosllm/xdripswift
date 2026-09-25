@@ -478,6 +478,8 @@
 "therapy.carbNormal" = "Normal carbohydrate absorption. Includes a 10-minute delay before absorption begins.";
 "therapy.carbLong" = "Longer carbohydrate absorption. May be useful when GLP-1 medication slows digestion. Includes a 10-minute delay before absorption begins.";
 "therapy.automatic" = "Automatic";
+"therapy.siriBolusWhenLocked" = "Siri Bolus When Locked";
+"therapy.siriBolusFooter" = "The Siri \"Log Bolus\" action records bolus insulin in half-unit steps up to 20 U and reads the amount back before saving. When this is off, the iPhone must be unlocked.";
 
 "therapy.liveActivityMetricsFooter" = "Show available IOB and COB in the Large Lock Screen layout and the CarPlay/Smart Stack Chart layout.";
 

@@ -549,6 +549,8 @@
 "therapy.carbNormal" = "Normaali hiilihydraattien imeytyminen. Sisältää 10 minuutin viiveen ennen imeytymisen alkua.";
 "therapy.carbLong" = "Pidempi hiilihydraattien imeytyminen. Voi olla hyödyllinen, kun GLP-1-lääkitys hidastaa ruoansulatusta. Sisältää 10 minuutin viiveen ennen imeytymisen alkua.";
 "therapy.automatic" = "Automaattinen";
+"therapy.siriBolusWhenLocked" = "Siri-bolus lukittuna";
+"therapy.siriBolusFooter" = "Sirin \"Log Bolus\" -toiminto kirjaa bolusinsuliinin 0,5 yksikön portain enintään 20 yksikköön ja lukee määrän ääneen ennen tallennusta. Kun tämä on pois päältä, iPhonen on oltava avattuna.";
 
 "therapy.liveActivityMetricsFooter" = "Näytä käytettävissä olevat IOB- ja COB-arvot lukitusnäytön suuressa asettelussa ja CarPlayn/Älykkään pinon kaavioasettelussa.";
 

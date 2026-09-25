@@ -39,6 +39,19 @@ struct AppsShortcuts: AppShortcutsProvider {
             shortTitle: "Disable Speak Readings",
             systemImageName: "speaker.slash"
         )
+        AppShortcut(
+            intent: LogBolusIntent(),
+            phrases: [
+                "Log \(\.$amount) bolus in \(.applicationName)",
+                "Add \(\.$amount) bolus in \(.applicationName)",
+                "Log \(\.$amount) units of insulin in \(.applicationName)",
+                "Add \(\.$amount) units of insulin in \(.applicationName)",
+                "Log a bolus in \(.applicationName)",
+                "Log bolus in \(.applicationName)",
+            ],
+            shortTitle: "Log Bolus",
+            systemImageName: "syringe"
+        )
     }
 }
 

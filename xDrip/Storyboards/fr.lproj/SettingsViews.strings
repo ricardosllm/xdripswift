@@ -579,6 +579,8 @@
 "therapy.carbNormal" = "Absorption normale des glucides. Comprend un délai de 10 minutes avant le début.";
 "therapy.carbLong" = "Absorption des glucides plus longue. Peut être utile lorsque les médicaments GLP-1 ralentissent la digestion. Comprend un délai de 10 minutes avant le début.";
 "therapy.automatic" = "Automatique";
+"therapy.siriBolusWhenLocked" = "Bolus Siri si verrouillé";
+"therapy.siriBolusFooter" = "L'action Siri \"Log Bolus\" enregistre l'insuline en bolus par pas de 0,5 U jusqu'à 20 U et relit la quantité avant l'enregistrement. Si cette option est désactivée, l'iPhone doit être déverrouillé.";
 
 "therapy.liveActivityMetricsFooter" = "Afficher les valeurs IOB et COB disponibles dans la grande présentation de l’écran verrouillé et la présentation avec graphique de CarPlay/Pile intelligente.";
 

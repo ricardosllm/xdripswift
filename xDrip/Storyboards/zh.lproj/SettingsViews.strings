@@ -688,6 +688,8 @@
 "therapy.carbNormal" = "正常的碳水吸收。吸收开始前有 10 分钟延迟。";
 "therapy.carbLong" = "较长的碳水吸收。当 GLP-1 药物减慢消化时可能有用。吸收开始前有 10 分钟延迟。";
 "therapy.automatic" = "自动";
+"therapy.siriBolusWhenLocked" = "锁定时使用 Siri 大剂量";
+"therapy.siriBolusFooter" = "Siri \"Log Bolus\" 操作以 0.5 U 为步长记录最多 20 U 的大剂量胰岛素，并在保存前读出剂量。关闭此选项时，iPhone 必须处于解锁状态。";
 
 "therapy.liveActivityMetricsFooter" = "在锁定屏幕的大布局和 CarPlay/智能叠放的图表布局中显示可用的 IOB 和 COB。";
 

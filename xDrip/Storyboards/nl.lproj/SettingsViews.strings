@@ -563,6 +563,8 @@
 "therapy.carbNormal" = "Normale koolhydraatopname. Inclusief 10 minuten vertraging voor de opname begint.";
 "therapy.carbLong" = "Langere koolhydraatopname. Kan nuttig zijn wanneer GLP-1-medicatie de spijsvertering vertraagt. Inclusief 10 minuten vertraging voor de opname begint.";
 "therapy.automatic" = "Automatisch";
+"therapy.siriBolusWhenLocked" = "Siri-bolus bij vergrendeling";
+"therapy.siriBolusFooter" = "De Siri-actie \"Log Bolus\" registreert bolusinsuline in stappen van 0,5 E tot 20 E en leest de hoeveelheid voor voordat deze wordt opgeslagen. Als dit uit staat, moet de iPhone ontgrendeld zijn.";
 
 "therapy.liveActivityMetricsFooter" = "Toon beschikbare IOB en COB in de grote toegangsschermweergave en de grafiekweergave van CarPlay/Slimme stapel.";
 

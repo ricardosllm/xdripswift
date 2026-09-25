@@ -537,6 +537,8 @@
 "therapy.carbNormal" = "Normalt kolhydratupptag. Inkluderar 10 minuters fördröjning innan upptaget börjar.";
 "therapy.carbLong" = "Längre kolhydratupptag. Kan vara användbart när GLP-1-läkemedel bromsar matsmältningen. Inkluderar 10 minuters fördröjning innan upptaget börjar.";
 "therapy.automatic" = "Automatiskt";
+"therapy.siriBolusWhenLocked" = "Siri-bolus vid låst skärm";
+"therapy.siriBolusFooter" = "Siri-åtgärden \"Log Bolus\" registrerar bolusinsulin i steg om 0,5 E upp till 20 E och läser upp mängden innan den sparas. När detta är av måste iPhonen vara upplåst.";
 
 "therapy.liveActivityMetricsFooter" = "Visa tillgängligt IOB och COB i den stora låsskärmslayouten och i diagramlayouten för CarPlay/Smart trave.";
 

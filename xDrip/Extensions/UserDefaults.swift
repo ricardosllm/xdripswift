@@ -220,6 +220,8 @@ extension UserDefaults {
         case lastBasalInjectionUnits = "lastBasalInjectionUnits"
         /// last saved insulin type used to prefill a new basal injection
         case lastBasalInjectionInsulinDescription = "lastBasalInjectionInsulinDescription"
+        /// may the Siri Log Bolus action record a treatment while the phone is locked?
+        case allowSiriBolusWhenLocked = "allowSiriBolusWhenLocked"
         /// override the default canula age value (CAGE = time since site change)?
         case CAGEMaxHours = "CAGEMaxHours"
 
@@ -1676,6 +1678,12 @@ extension UserDefaults {
     var lastBasalInjectionInsulinDescription: String {
         get { string(forKey: Key.lastBasalInjectionInsulinDescription.rawValue) ?? "" }
         set { set(newValue, forKey: Key.lastBasalInjectionInsulinDescription.rawValue) }
+    }
+
+    /// Off by default so anyone holding a locked phone cannot add insulin to the user's records.
+    var allowSiriBolusWhenLocked: Bool {
+        get { bool(forKey: Key.allowSiriBolusWhenLocked.rawValue) }
+        set { set(newValue, forKey: Key.allowSiriBolusWhenLocked.rawValue) }
     }
 
     /// Invert the stored flag so injections are visible before a filter preference has been saved.

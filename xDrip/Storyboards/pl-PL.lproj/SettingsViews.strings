@@ -763,6 +763,8 @@
 "therapy.carbNormal" = "Normalne wchłanianie węglowodanów. Obejmuje 10 minut opóźnienia przed rozpoczęciem.";
 "therapy.carbLong" = "Dłuższe wchłanianie węglowodanów. Może być przydatne, gdy leki GLP-1 spowalniają trawienie. Obejmuje 10 minut opóźnienia przed rozpoczęciem.";
 "therapy.automatic" = "Automatycznie";
+"therapy.siriBolusWhenLocked" = "Bolus Siri po blokadzie";
+"therapy.siriBolusFooter" = "Akcja Siri \"Log Bolus\" zapisuje insulinę bolusową w krokach co 0,5 j. do 20 j. i odczytuje ilość przed zapisaniem. Gdy ta opcja jest wyłączona, iPhone musi być odblokowany.";
 
 "therapy.liveActivityMetricsFooter" = "Pokazuj dostępne IOB i COB w dużym układzie ekranu blokady oraz w układzie z wykresem CarPlay/Stosu inteligentnego.";
 

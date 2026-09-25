@@ -511,6 +511,8 @@
 "therapy.carbNormal" = "Normal karbonhidrat emilimi. Emilim başlamadan önce 10 dakikalık gecikme içerir.";
 "therapy.carbLong" = "Daha uzun karbonhidrat emilimi. GLP-1 ilaçları sindirimi yavaşlattığında yararlı olabilir. Emilim başlamadan önce 10 dakikalık gecikme içerir.";
 "therapy.automatic" = "Otomatik";
+"therapy.siriBolusWhenLocked" = "Kilitliyken Siri bolusu";
+"therapy.siriBolusFooter" = "Siri \"Log Bolus\" eylemi bolus insülini 0,5 U adımlarla 20 U'ya kadar kaydeder ve kaydetmeden önce miktarı sesli okur. Bu kapalıyken iPhone'un kilidi açık olmalıdır.";
 
 "therapy.liveActivityMetricsFooter" = "Kullanılabilir IOB ve COB değerlerini büyük kilit ekranı düzeninde ve CarPlay/Akıllı Gruplama grafik düzeninde göster.";
 

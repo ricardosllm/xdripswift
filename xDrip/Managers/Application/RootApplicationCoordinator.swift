@@ -291,9 +291,12 @@ import AppIntents
         
         // Setup Core Data Manager - setting up coreDataManager happens asynchronously
         // completion handler is called when finished. This gives the app time to already continue setup which is independent of coredata, like initializing the views
-        coreDataManager = CoreDataManager(modelName: ConstantsCoreData.modelName, completion: { _ in
-            
+        coreDataManager = CoreDataManager(modelName: ConstantsCoreData.modelName, completion: { coreDataManager in
+
             self.setupApplicationData()
+
+            // App Intents run in this process and must share this store rather than open another
+            IntentCoreData.publish(coreDataManager)
 
             if let coreDataManager = self.coreDataManager,
                let statisticsManager = self.statisticsManager,

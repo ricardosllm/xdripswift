@@ -738,6 +738,8 @@
 "therapy.carbNormal" = "Normale Kohlenhydrataufnahme. Enthält eine Verzögerung von 10 Minuten vor Beginn.";
 "therapy.carbLong" = "Längere Kohlenhydrataufnahme. Kann hilfreich sein, wenn GLP-1-Medikamente die Verdauung verlangsamen. Enthält eine Verzögerung von 10 Minuten vor Beginn.";
 "therapy.automatic" = "Automatisch";
+"therapy.siriBolusWhenLocked" = "Siri-Bolus bei Sperre";
+"therapy.siriBolusFooter" = "Die Siri-Aktion \"Log Bolus\" erfasst Bolusinsulin in Schritten von 0,5 E bis 20 E und liest die Menge vor dem Speichern vor. Wenn dies aus ist, muss das iPhone entsperrt sein.";
 
 "therapy.liveActivityMetricsFooter" = "Verfügbare IOB- und COB-Werte im großen Sperrbildschirm-Layout und im Diagramm-Layout von CarPlay/Smart-Stapel anzeigen.";
 

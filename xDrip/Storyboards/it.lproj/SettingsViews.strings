@@ -764,6 +764,8 @@
 "therapy.carbNormal" = "Assorbimento normale dei carboidrati. Include un ritardo di 10 minuti prima dell’inizio.";
 "therapy.carbLong" = "Assorbimento dei carboidrati più lungo. Può essere utile quando i farmaci GLP-1 rallentano la digestione. Include un ritardo di 10 minuti prima dell’inizio.";
 "therapy.automatic" = "Automatico";
+"therapy.siriBolusWhenLocked" = "Bolo Siri con blocco";
+"therapy.siriBolusFooter" = "L'azione Siri \"Log Bolus\" registra l'insulina in bolo a passi di 0,5 U fino a 20 U e rilegge la quantità prima di salvarla. Se disattivato, l'iPhone deve essere sbloccato.";
 
 "therapy.liveActivityMetricsFooter" = "Mostra i valori IOB e COB disponibili nel layout grande della schermata di blocco e nel layout con grafico di CarPlay/Raccolta smart.";
 

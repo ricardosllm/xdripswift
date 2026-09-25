@@ -95,6 +95,32 @@ extension CoreDataManager {
     }
 }
 
+/// Hands App Intents the application's own CoreDataManager.
+///
+/// Intents run in the app process, where RootApplicationCoordinator opens the store on every launch,
+/// including a background launch by Siri. A second CoreDataManager would replace that manager's
+/// background and termination saves in ApplicationManager, so intents that write wait for this one.
+@MainActor enum IntentCoreData {
+    private static var coreDataManager: CoreDataManager?
+    private static var waitingIntents: [CheckedContinuation<CoreDataManager, Never>] = []
+
+    /// Called by RootApplicationCoordinator once its persistent store is ready.
+    static func publish(_ coreDataManager: CoreDataManager) {
+        self.coreDataManager = coreDataManager
+        waitingIntents.forEach { $0.resume(returning: coreDataManager) }
+        waitingIntents.removeAll()
+    }
+
+    /// Returns at once when the store is open, otherwise when the launch finishes opening it.
+    static func sharedManager() async -> CoreDataManager {
+        if let coreDataManager {
+            return coreDataManager
+        }
+
+        return await withCheckedContinuation { waitingIntents.append($0) }
+    }
+}
+
 enum IntentError: Error, CustomLocalizedStringResourceConvertible {
     case message(String)
 
